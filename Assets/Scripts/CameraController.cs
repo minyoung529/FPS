@@ -13,7 +13,7 @@ public class CameraController : MonoBehaviour
 
     private void Start()
     {
-        offset = new Vector3(0, 5, -5);
+        offset = new Vector3(0, -4, 2);
         verticalAngle = 45;
         distance = 10;
         relativePos = Quaternion.Euler(verticalAngle, horizontalAngle, 0) * new Vector3(0, 0, -distance);

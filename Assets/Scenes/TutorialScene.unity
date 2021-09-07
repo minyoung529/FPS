@@ -695,9 +695,17 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 392885215735362602, guid: 494cfbcc657459d4f877cdaf26b32592, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 392885215735362602, guid: 494cfbcc657459d4f877cdaf26b32592, type: 3}
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 8b5494f67396b2747bcedd6502ec60db, type: 2}
+    - target: {fileID: 392885215735362602, guid: 494cfbcc657459d4f877cdaf26b32592, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 392885215744869900, guid: 494cfbcc657459d4f877cdaf26b32592, type: 3}
       propertyPath: m_Name
       value: Player
@@ -746,6 +754,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8281492950478230834, guid: 494cfbcc657459d4f877cdaf26b32592, type: 3}
+      propertyPath: bulletPrefab
+      value: 
+      objectReference: {fileID: 7464170349720719860, guid: 5518051a38b2aae4198688c560467073, type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 494cfbcc657459d4f877cdaf26b32592, type: 3}
 --- !u!1 &8619338779907937516 stripped
