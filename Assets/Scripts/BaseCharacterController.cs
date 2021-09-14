@@ -9,12 +9,13 @@ public class BaseCharacterController : MonoBehaviour
     public float speed;
     public float jumpForce;
     public float gravity;
+    protected int hp;
     protected float moveY;
 
     protected CharacterController controller;
 
 
-    protected virtual void Start()
+    protected virtual void Awake()
     {
         controller = GetComponent<CharacterController>();
     }

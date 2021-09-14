@@ -4,14 +4,13 @@ using UnityEngine;
 
 public class EnemyController : BaseCharacterController
 {
-    protected override void Start()
+    protected override void Awake()
     {
-        base.Start();
+        base.Awake();
 
         speed = 1;
         jumpForce = 3;
         gravity = 9.8f;
-
     }
 
     void Update()

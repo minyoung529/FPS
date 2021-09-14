@@ -8,30 +8,40 @@ public class PlayerController : BaseCharacterController
     [SerializeField]
     private GameObject bulletPrefab;
 
-    protected override void Start()
+    [SerializeField] private int currentAmmo;
+    [SerializeField] private int maxAmmo;
+    private bool isReloading;
+
+    protected override void Awake()
     {
         animator = GetComponent<Animator>();
-        base.Start();
+        base.Awake();
 
         speed = 10;
-        jumpForce = 10;
-        gravity = 20;
+        jumpForce = 20;
+        gravity = 50;
+
+        maxAmmo = 10;
+        currentAmmo = maxAmmo;
     }
 
     void Update()
     {
-        if (Input.GetKeyUp(KeyCode.Z))
+        if (Input.GetKeyDown(KeyCode.Mouse0) && !isReloading)
         {
             ShootBullet();
+        }
+
+        if(Input.GetKeyDown(KeyCode.R) && currentAmmo != maxAmmo)
+        {
+            Invoke("Reload", 3f);
         }
     }
 
     private void PlayerJump()
     {
-        Debug.Log("sdf");
         if (controller.isGrounded)
         {
-            Debug.Log("ssfsdfdf");
             moveY = jumpForce;
         }
     }
@@ -71,7 +81,24 @@ public class PlayerController : BaseCharacterController
 
     private void ShootBullet()
     {
+        currentAmmo--;
+
+        if (currentAmmo == 0)
+        {
+            isReloading = true;
+            Invoke("Reload", 3f);
+        }
+        UIManager.Instance.ChangeCurrentAmmoText(currentAmmo);
+        animator.SetTrigger("Shoot");
         GameObject obj = Instantiate(bulletPrefab, transform.position + transform.forward * 1f + transform.up * 1f, Quaternion.identity);
-        obj.transform.rotation = Quaternion.Euler(-90, transform.rotation.y, 0);
+        obj.transform.rotation = Quaternion.Euler(Camera.main.transform.rotation.eulerAngles.x + 90, transform.eulerAngles.y, 0);
+    }
+
+    private void Reload()
+    {
+        isReloading = false;
+        currentAmmo = maxAmmo;
+        UIManager.Instance.ChangeCurrentAmmoText(currentAmmo);
+
     }
 }
