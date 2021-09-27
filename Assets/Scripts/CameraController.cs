@@ -18,7 +18,7 @@ public class CameraController : MonoBehaviour
     private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
-        lookOffset = new Vector3(0.5f, 1.5f, 0f);
+        lookOffset = new Vector3(1f, 1.5f, 0f);
         offset = new Vector3(0, -4, 2);
         verticalAngle = 45;
         distance = 10;
@@ -31,20 +31,6 @@ public class CameraController : MonoBehaviour
         float mouseX = Input.GetAxisRaw("Mouse X");
         float mouseY = -Input.GetAxisRaw("Mouse Y");
         Rotate(mouseX * rotateSensitivity, mouseY * rotateSensitivity);
-        //if (Input.GetKey(KeyCode.Q))
-        //{
-        //    Rotate(-1);
-        //}
-
-        //else if (Input.GetKey(KeyCode.E))
-        //{
-        //    Rotate(1f);
-        //}
-
-        //else
-        //{
-        //    Rotate(0);
-        //}
 
         transform.position = folllowingTarget.transform.position + offset + relativePos;
         transform.LookAt(folllowingTarget.transform.position + transform.TransformDirection(lookOffset));

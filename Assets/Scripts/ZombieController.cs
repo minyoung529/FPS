@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using ZombieType = TutorialEnemyGenerator.ZombieType;
 
 public class ZombieController : BaseCharacterController
@@ -8,23 +9,28 @@ public class ZombieController : BaseCharacterController
     private Animator animator;
 
     public ZombieType zombieType;
-    private GameObject hud;
+    private Slider hud;
 
 
     protected override void Awake()
     {
         animator = GetComponent<Animator>();
         base.Awake();
-        SetHP();
     }
 
     //액티브 true일 때 발생
     private void OnEnable()
     {
         controller.enabled = true;
-        SetHP();
         AddHUD();
+
+        SetHP();
         UpdateHP();
+    }
+
+    private void OnDisable()
+    {
+        Destroy(hud?.gameObject);
     }
 
     private void SetHP()
@@ -33,11 +39,15 @@ public class ZombieController : BaseCharacterController
         {
             case ZombieType.Basic:
                 hp = 5;
+                hud.maxValue = 5;
                 break;
             case ZombieType.Strong:
                 hp = 10;
+                hud.maxValue = 10;
                 break;
         }
+
+        hud.value = hud.maxValue;
     }
     public void DestroyZombie()
     {
@@ -48,6 +58,7 @@ public class ZombieController : BaseCharacterController
     internal void OnHit()
     {
         hp--;
+        hud.value--;
 
         if (hp > 0)
         {
@@ -69,12 +80,15 @@ public class ZombieController : BaseCharacterController
 
     private void AddHUD()
     {
-        hud = UIManager.Instance.AddEnemyHUD();
+        hud = UIManager.Instance.AddEnemyHUD().GetComponent<Slider>();
     }
 
     private void UpdateHP()
     {
-        UIManager.Instance.UpdateHUDPosition(hud, transform.position/* + transform.up * 2*/);
+        if(hud != null)
+        {
+            UIManager.Instance.UpdateHUDPosition(hud.gameObject, transform.position + transform.up * 2);
+        }
     }
 
     private void Update()

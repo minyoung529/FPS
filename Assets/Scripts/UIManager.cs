@@ -14,7 +14,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private RectTransform canvas;
     [SerializeField] private RectTransform hpBar;
     [SerializeField] private GameObject root;
-    public GameObject hp;
 
     public GameObject hpPref;
 
@@ -47,7 +46,13 @@ public class UIManager : MonoBehaviour
 
     public void UpdateHUDPosition(GameObject hud, Vector3 target)
     {
-        Vector2 viewportPoint = Camera.main.WorldToViewportPoint(target);
+        Vector3 viewportPoint = Camera.main.WorldToViewportPoint(target);
+
+        if(viewportPoint.z < 0)
+        {
+            return;
+        }
+
         Vector2 position = new Vector2(viewportPoint.x * canvas.rect.width, viewportPoint.y * canvas.rect.height);
         //RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas, new Vector2(viewportPoint.x* canvas.sizeDelta.x,viewportPoint.y * canvas.sizeDelta.y), uiCamera, out canvasPos);
 

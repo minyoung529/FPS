@@ -44,7 +44,6 @@ public class BulletController : MonoBehaviour
                 collision.gameObject.GetComponent<ZombieController>()?.OnHit();
                 Destroy(gameObject);
                 break;
-
         }
     }
 
