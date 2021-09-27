@@ -17,12 +17,16 @@ public class BulletController : MonoBehaviour
 
     private void Start()
     {
+        transform.Rotate(90, 0, 0);
+
         originPos = transform.position;
         rigid.AddForce(transform.up * speed);
     }
 
     private void OnTriggerEnter(Collider other)
     {
+
+
         if (other.gameObject.CompareTag("Enemy"))
         {
             Destroy(other.gameObject);
@@ -34,11 +38,13 @@ public class BulletController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Enemy"))
+        switch (collision.gameObject.tag)
         {
-            //Destroy(collision.gameObject);
-            collision.gameObject.GetComponent<ZombieController>()?.OnHit();
-            Destroy(gameObject);
+            case "Enemy":
+                collision.gameObject.GetComponent<ZombieController>()?.OnHit();
+                Destroy(gameObject);
+                break;
+
         }
     }
 

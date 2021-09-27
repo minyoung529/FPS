@@ -775,6 +775,7 @@ MonoBehaviour:
   jumpForce: 0
   gravity: 0
   zombieType: 0
+  hud: {fileID: 5154995506307380320, guid: 6e7c88b73b6e1494cbafc9a3bd1fade5, type: 3}
 --- !u!1 &6316651458007700924
 GameObject:
   m_ObjectHideFlags: 0

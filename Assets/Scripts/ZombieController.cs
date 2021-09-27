@@ -8,6 +8,8 @@ public class ZombieController : BaseCharacterController
     private Animator animator;
 
     public ZombieType zombieType;
+    private GameObject hud;
+
 
     protected override void Awake()
     {
@@ -21,7 +23,8 @@ public class ZombieController : BaseCharacterController
     {
         controller.enabled = true;
         SetHP();
-
+        AddHUD();
+        UpdateHP();
     }
 
     private void SetHP()
@@ -62,5 +65,20 @@ public class ZombieController : BaseCharacterController
     {
         yield return new WaitForSeconds(2f);
         DestroyZombie();
+    }
+
+    private void AddHUD()
+    {
+        hud = UIManager.Instance.AddEnemyHUD();
+    }
+
+    private void UpdateHP()
+    {
+        UIManager.Instance.UpdateHUDPosition(hud, transform.position/* + transform.up * 2*/);
+    }
+
+    private void Update()
+    {
+        UpdateHP();
     }
 }

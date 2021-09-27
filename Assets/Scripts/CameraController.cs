@@ -18,6 +18,7 @@ public class CameraController : MonoBehaviour
     private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
+        lookOffset = new Vector3(0.5f, 1.5f, 0f);
         offset = new Vector3(0, -4, 2);
         verticalAngle = 45;
         distance = 10;
@@ -53,7 +54,6 @@ public class CameraController : MonoBehaviour
     {
         horizontalAngle += x;
         verticalAngle += y;
-        Debug.Log(verticalAngle);
         relativePos = Quaternion.Euler(Mathf.Clamp(verticalAngle, -45, 80), horizontalAngle, 0) * new Vector3(0, 0, -distance);
     }
 }

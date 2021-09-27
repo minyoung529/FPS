@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class EnemyController : BaseCharacterController
 {
+    public GameObject enem;
+
     protected override void Awake()
     {
         base.Awake();
@@ -31,4 +33,5 @@ public class EnemyController : BaseCharacterController
         if (controller.isGrounded)
             moveDir.y = jumpForce;
     }
+
 }
