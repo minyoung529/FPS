@@ -14,15 +14,22 @@ public class UIManager : MonoBehaviour
     [SerializeField] private RectTransform canvas;
     [SerializeField] private RectTransform hpBar;
     [SerializeField] private GameObject root;
+    [SerializeField] private TextMeshProUGUI curHP;
+    [SerializeField] private TextMeshProUGUI maxHP;
 
     public GameObject hpPref;
-
     public GameObject player;
+
+    private PlayerController playerController;
+
     private void Awake()
     {
         Instance = this;
     }
-    
+    private void Start()
+    {
+        playerController = player.GetComponent<PlayerController>();
+    }
     public void ChangeCurrentAmmoText(int current)
     {
         currentAmmoText.text = current.ToString();
@@ -57,5 +64,9 @@ public class UIManager : MonoBehaviour
         //RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas, new Vector2(viewportPoint.x* canvas.sizeDelta.x,viewportPoint.y * canvas.sizeDelta.y), uiCamera, out canvasPos);
 
         hud.transform.localPosition = position;
+    }
+
+    private void SetPlayerHPBar()
+    {
     }
 }

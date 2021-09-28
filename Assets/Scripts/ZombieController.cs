@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.UI;
 using ZombieType = TutorialEnemyGenerator.ZombieType;
 
@@ -11,21 +12,42 @@ public class ZombieController : BaseCharacterController
     public ZombieType zombieType;
     private Slider hud;
 
+    private NavMeshAgent navMeshAgent;
+    public Transform destinationTranform;
+
+    private bool isMoving;
+
+    private Rigidbody rigid;
 
     protected override void Awake()
     {
         animator = GetComponent<Animator>();
+        navMeshAgent = GetComponent<NavMeshAgent>();
+        rigid = GetComponent<Rigidbody>();
+        destinationTranform = UIManager.Instance.player.transform;
         base.Awake();
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            navMeshAgent.SetDestination(destinationTranform.position);
+        }
     }
 
     //액티브 true일 때 발생
     private void OnEnable()
     {
-        controller.enabled = true;
+        //controller.enabled = true;
         AddHUD();
 
         SetHP();
         UpdateHP();
+
+        Invoke("MoveToRandomPos", 2f);
+
+        navMeshAgent.SetDestination(destinationTranform.position);
     }
 
     private void OnDisable()
@@ -85,7 +107,7 @@ public class ZombieController : BaseCharacterController
 
     private void UpdateHP()
     {
-        if(hud != null)
+        if (hud != null)
         {
             UIManager.Instance.UpdateHUDPosition(hud.gameObject, transform.position + transform.up * 2);
         }
@@ -93,6 +115,33 @@ public class ZombieController : BaseCharacterController
 
     private void Update()
     {
+        if (navMeshAgent.remainingDistance <= 0)
+        {
+            float time = Random.Range(3f, 4f);
+            Invoke("MoveToRandomPos", time);
+        }
+
+        animator.SetFloat("Speed", navMeshAgent.speed);
+
         UpdateHP();
+    }
+
+    private void MoveToRandomPos()
+    {
+        float radius = 10;
+        Vector3 randomPos = Random.insideUnitSphere * radius;
+        NavMeshHit hit;
+        Vector3 destination = Vector3.zero;
+        if (NavMesh.SamplePosition(randomPos, out hit, radius, 1))
+        {
+            destination = hit.position;
+        }
+
+        else
+        {
+            destination = transform.position - randomPos;
+        }
+
+        navMeshAgent.SetDestination(destination);
     }
 }

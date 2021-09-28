@@ -116,4 +116,15 @@ public class PlayerController : BaseCharacterController
         UIManager.Instance.ChangeCurrentAmmoText(currentAmmo);
 
     }
+
+    private void SetHP()
+    {
+        maxHP = 20;
+        hp = maxHP;
+    }
+
+    public void OnHit()
+    {
+
+    }
 }
