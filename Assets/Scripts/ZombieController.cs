@@ -15,7 +15,7 @@ public class ZombieController : BaseCharacterController
     private NavMeshAgent navMeshAgent;
     public Transform destinationTranform;
 
-    private bool isMoving;
+    private bool isDead;
 
     private Rigidbody rigid;
 
@@ -30,8 +30,11 @@ public class ZombieController : BaseCharacterController
 
     private void OnTriggerStay(Collider other)
     {
+
         if (other.CompareTag("Player"))
         {
+            if (isDead) return;
+
             navMeshAgent.SetDestination(destinationTranform.position);
         }
     }
@@ -41,6 +44,7 @@ public class ZombieController : BaseCharacterController
     {
         //controller.enabled = true;
         AddHUD();
+        isDead = false;
 
         SetHP();
         UpdateHP();
@@ -89,6 +93,7 @@ public class ZombieController : BaseCharacterController
 
         else if (hp <= 0)
         {
+            isDead = true;
             animator.SetTrigger("Dead");
             StartCoroutine(Dead());
         }
@@ -115,6 +120,7 @@ public class ZombieController : BaseCharacterController
 
     private void Update()
     {
+        if (isDead) return;
         if (navMeshAgent.remainingDistance <= 0)
         {
             float time = Random.Range(3f, 4f);
