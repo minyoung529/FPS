@@ -23,19 +23,6 @@ public class BulletController : MonoBehaviour
         rigid.AddForce(transform.up * speed);
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-
-
-        //if (other.gameObject.CompareTag("Enemy"))
-        //{
-        //    Destroy(other.gameObject);
-        //    Destroy(gameObject);
-        //}
-
-        //Destroy(gameObject);
-    }
-
     private void OnCollisionEnter(Collision collision)
     {
         switch (collision.gameObject.tag)

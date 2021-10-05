@@ -11,6 +11,7 @@ public class PlayerController : BaseCharacterController
     [SerializeField] private int currentAmmo;
     [SerializeField] private int maxAmmo;
     private bool isReloading;
+    private bool isDead;
     Vector2 screenCenterPos;
     [SerializeField]
     private LayerMask mouseColliderLayerMask;
@@ -28,6 +29,7 @@ public class PlayerController : BaseCharacterController
 
         maxAmmo = 10;
         currentAmmo = maxAmmo;
+        SetHP();
 
         screenCenterPos = new Vector2(Screen.width / 2f, Screen.height / 2f);
     }
@@ -35,7 +37,7 @@ public class PlayerController : BaseCharacterController
     void Update()
     {
         Ray ray = Camera.main.ScreenPointToRay(screenCenterPos);
-        if(Physics.Raycast(ray,out RaycastHit hit, 999f, mouseColliderLayerMask))
+        if (Physics.Raycast(ray, out RaycastHit hit, 999f, mouseColliderLayerMask))
         {
             aimPosition = hit.point;
         }
@@ -45,7 +47,7 @@ public class PlayerController : BaseCharacterController
             ShootBullet();
         }
 
-        if(Input.GetKeyDown(KeyCode.R) && currentAmmo != maxAmmo)
+        if (Input.GetKeyDown(KeyCode.R) && currentAmmo != maxAmmo)
         {
             Invoke("Reload", 3f);
         }
@@ -67,6 +69,7 @@ public class PlayerController : BaseCharacterController
 
     private void FixedUpdate()
     {
+        if (isDead) return;
         Rotate();
         moveDir = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
         moveDir *= speed;
@@ -106,7 +109,7 @@ public class PlayerController : BaseCharacterController
 
         Vector3 aimDir = (aimPosition - bulletSpawn.position).normalized;
 
-        Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.LookRotation(aimDir,Vector3.up));
+        Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.LookRotation(aimDir, Vector3.up));
     }
 
     private void Reload()
@@ -123,8 +126,29 @@ public class PlayerController : BaseCharacterController
         hp = maxHP;
     }
 
-    public void OnHit()
+    public void OnHit(int attackPower)
     {
+        hp -= attackPower;
+        UIManager.Instance.UpdatePlayerHP(maxHP, hp);
 
+        if (hp < 0)
+        {
+            OnDead();
+            UIManager.Instance.UpdatePlayerHP(maxHP, hp);
+        }
+    }
+
+    public bool IsDead()
+    {
+        return isDead;
+    }
+
+    private void OnDead()
+    {
+        hp = 0;
+        isDead = true;
+        controller.enabled = false;
+        animator.SetBool("Dead", true);
+        UIManager.Instance.GameOver();
     }
 }

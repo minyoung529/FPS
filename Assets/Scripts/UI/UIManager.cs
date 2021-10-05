@@ -16,11 +16,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject root;
     [SerializeField] private TextMeshProUGUI curHP;
     [SerializeField] private TextMeshProUGUI maxHP;
+    [SerializeField] private Image playerHP;
+
+    [SerializeField] private Animator blackPanel;
 
     public GameObject hpPref;
     public GameObject player;
 
-    private PlayerController playerController;
+    public PlayerController playerController;
 
     private void Awake()
     {
@@ -66,7 +69,21 @@ public class UIManager : MonoBehaviour
         hud.transform.localPosition = position;
     }
 
-    private void SetPlayerHPBar()
+    public void UpdatePlayerHP(int max, int cur)
     {
+        curHP.text = cur.ToString();
+        maxHP.text = max.ToString();
+        playerHP.fillAmount = (float)cur / (float)max;
+    }
+
+    public void GameOver()
+    {
+        StartCoroutine(FadeOut());
+    }
+
+    private IEnumerator FadeOut()
+    {
+        yield return new WaitForSeconds(2f);
+        blackPanel.Play("BlackOut");
     }
 }

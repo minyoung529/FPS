@@ -16,26 +16,43 @@ public class ZombieController : BaseCharacterController
     public Transform destinationTranform;
 
     private bool isDead;
+    private bool isAttacking;
+    public bool playerInAttack;
+    private int attackPower;
 
-    private Rigidbody rigid;
+    private PlayerController targetPlayerController;
 
     protected override void Awake()
     {
         animator = GetComponent<Animator>();
         navMeshAgent = GetComponent<NavMeshAgent>();
-        rigid = GetComponent<Rigidbody>();
         destinationTranform = UIManager.Instance.player.transform;
         base.Awake();
     }
 
     private void OnTriggerStay(Collider other)
     {
-
         if (other.CompareTag("Player"))
         {
             if (isDead) return;
+            if (other.GetComponent<PlayerController>().IsDead()) return;
+            if (isAttacking)
+            {
+                navMeshAgent.SetDestination(destinationTranform.position);
+            }
 
-            navMeshAgent.SetDestination(destinationTranform.position);
+            else
+            {
+                if(playerInAttack)
+                {
+                    Attack(targetPlayerController);
+                }
+                else
+                {
+                    navMeshAgent.SetDestination(other.transform.position);
+                    targetPlayerController = other.GetComponent<PlayerController>();
+                }
+            }
         }
     }
 
@@ -66,10 +83,14 @@ public class ZombieController : BaseCharacterController
             case ZombieType.Basic:
                 hp = 5;
                 hud.maxValue = 5;
+                attackPower = 1;
                 break;
+
             case ZombieType.Strong:
                 hp = 10;
                 hud.maxValue = 10;
+                animator.speed = 0.6f;
+                attackPower = 5;
                 break;
         }
 
@@ -86,12 +107,7 @@ public class ZombieController : BaseCharacterController
         hp--;
         hud.value--;
 
-        if (hp > 0)
-        {
-            animator.SetTrigger("Attack");
-        }
-
-        else if (hp <= 0)
+        if (hp <= 0)
         {
             isDead = true;
             animator.SetTrigger("Dead");
@@ -127,7 +143,7 @@ public class ZombieController : BaseCharacterController
             Invoke("MoveToRandomPos", time);
         }
 
-        animator.SetFloat("Speed", navMeshAgent.speed);
+        animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
 
         UpdateHP();
     }
@@ -137,7 +153,8 @@ public class ZombieController : BaseCharacterController
         float radius = 10;
         Vector3 randomPos = Random.insideUnitSphere * radius;
         NavMeshHit hit;
-        Vector3 destination = Vector3.zero;
+        Vector3 destination;
+
         if (NavMesh.SamplePosition(randomPos, out hit, radius, 1))
         {
             destination = hit.position;
@@ -149,5 +166,45 @@ public class ZombieController : BaseCharacterController
         }
 
         navMeshAgent.SetDestination(destination);
+    }
+
+    internal void Attack(PlayerController playerController)
+    {
+        if (isAttacking) return;
+        if (playerController.IsDead()) return;
+
+        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(playerController.transform.position - transform.position), 1f);
+        animator.SetTrigger("Attack");
+        isAttacking = true;
+        playerInAttack = true;
+        navMeshAgent.isStopped = true;
+        targetPlayerController = playerController;
+
+        playerController.OnHit(attackPower);
+        Invoke("AttackEndAction", 2f);
+    }
+
+    internal void OnAttackEnd()
+    {
+        Invoke("AttackEndAction", 2f);
+    }
+
+    internal void ResetTarget()
+    {
+        navMeshAgent.isStopped = false;
+        targetPlayerController = null;
+        playerInAttack = false;
+        isAttacking = false;
+
+    }
+    private void AttackEndAction()
+    {
+        isAttacking = false;
+        navMeshAgent.isStopped = false;
+
+        if (playerInAttack)
+        {
+            //Attack();
+        }
     }
 }
