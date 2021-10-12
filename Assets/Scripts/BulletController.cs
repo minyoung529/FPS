@@ -28,7 +28,12 @@ public class BulletController : MonoBehaviour
         switch (collision.gameObject.tag)
         {
             case "Enemy":
-                collision.gameObject.GetComponent<ZombieController>()?.OnHit();
+                ZombieController ec = collision.gameObject.GetComponent<ZombieController>();
+                int score = ec.OnHit();
+                if (score > 0)
+                {
+                    UIManager.Instance.ChangeScore(score);
+                }
                 Destroy(gameObject);
                 break;
         }

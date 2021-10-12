@@ -8,6 +8,7 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance;
 
+    private const string RECORD_KEY = "RECORD_SCORE";
     //[SerializeField] private Text currentAmmoText;
     [SerializeField] private TextMeshProUGUI currentAmmoText;
     [SerializeField] private Camera uiCamera;
@@ -18,6 +19,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI maxHP;
     [SerializeField] private Image playerHP;
 
+    public Text scoreText;
+    public Text highScoreText;
+    public int score;
+    public int recordScore;
     [SerializeField] private Animator blackPanel;
 
     public GameObject hpPref;
@@ -28,6 +33,8 @@ public class UIManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        recordScore = PlayerPrefs.GetInt(RECORD_KEY, 0);
+        highScoreText.text = string.Format("HIGH SCORE: {0}", recordScore);
     }
     private void Start()
     {
@@ -36,6 +43,20 @@ public class UIManager : MonoBehaviour
     public void ChangeCurrentAmmoText(int current)
     {
         currentAmmoText.text = current.ToString();
+    }
+
+    public void ChangeScore(int _score)
+    {
+        score += _score;
+        scoreText.text = string.Format("SCORE: {0}", score);
+
+        if (recordScore < score)
+        {
+
+            recordScore = score;
+            highScoreText.text = string.Format("HIGH SCORE: {0}", recordScore);
+            PlayerPrefs.SetInt(RECORD_KEY, recordScore);
+        }
     }
 
     private void LateUpdate()
@@ -58,7 +79,7 @@ public class UIManager : MonoBehaviour
     {
         Vector3 viewportPoint = Camera.main.WorldToViewportPoint(target);
 
-        if(viewportPoint.z < 0)
+        if (viewportPoint.z < 0)
         {
             return;
         }

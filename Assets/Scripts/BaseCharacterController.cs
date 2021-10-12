@@ -9,7 +9,7 @@ public class BaseCharacterController : MonoBehaviour
     public float speed;
     public float jumpForce;
     public float gravity;
-    protected int hp;
+    public int hp;
     protected int maxHP;
     protected float moveY;
 

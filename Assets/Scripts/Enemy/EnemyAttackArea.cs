@@ -5,7 +5,6 @@ using UnityEngine;
 public class EnemyAttackArea : MonoBehaviour
 {
     public ZombieController zombie;
-
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("Player"))

@@ -19,13 +19,18 @@ public class ZombieController : BaseCharacterController
     private bool isAttacking;
     public bool playerInAttack;
     private int attackPower;
+    public int score;
+
 
     private PlayerController targetPlayerController;
+    private ParticleSystem particle;
+
 
     protected override void Awake()
     {
         animator = GetComponent<Animator>();
         navMeshAgent = GetComponent<NavMeshAgent>();
+        particle = GetComponentInChildren<ParticleSystem>();
         destinationTranform = UIManager.Instance.player.transform;
         base.Awake();
     }
@@ -61,6 +66,7 @@ public class ZombieController : BaseCharacterController
     {
         //controller.enabled = true;
         AddHUD();
+        //hud.gameObject.SetActive(false);
         isDead = false;
 
         SetHP();
@@ -73,7 +79,8 @@ public class ZombieController : BaseCharacterController
 
     private void OnDisable()
     {
-        Destroy(hud?.gameObject);
+        if (hud == null) return;
+        Destroy(hud.gameObject);
     }
 
     private void SetHP()
@@ -84,6 +91,7 @@ public class ZombieController : BaseCharacterController
                 hp = 5;
                 hud.maxValue = 5;
                 attackPower = 1;
+                score = 1;
                 break;
 
             case ZombieType.Strong:
@@ -91,6 +99,7 @@ public class ZombieController : BaseCharacterController
                 hud.maxValue = 10;
                 animator.speed = 0.6f;
                 attackPower = 5;
+                score = 5;
                 break;
         }
 
@@ -102,17 +111,27 @@ public class ZombieController : BaseCharacterController
         gameObject.SetActive(false);
     }
 
-    internal void OnHit()
+    internal int OnHit()
     {
         hp--;
         hud.value--;
+
+        particle.Play();
+
+        if (hud.gameObject.activeSelf)
+        {
+            //hud.gameObject.SetActive(true);
+        }
 
         if (hp <= 0)
         {
             isDead = true;
             animator.SetTrigger("Dead");
             StartCoroutine(Dead());
+            return score;
         }
+
+        return -1;
     }
 
     IEnumerator Dead()
@@ -180,7 +199,7 @@ public class ZombieController : BaseCharacterController
         navMeshAgent.isStopped = true;
         targetPlayerController = playerController;
 
-        playerController.OnHit(attackPower);
+        playerController.OnHit(attackPower,transform.position);
         Invoke("AttackEndAction", 2f);
     }
 

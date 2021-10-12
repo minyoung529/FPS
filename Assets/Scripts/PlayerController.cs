@@ -17,10 +17,14 @@ public class PlayerController : BaseCharacterController
     private LayerMask mouseColliderLayerMask;
     private Vector3 aimPosition;
     public Transform bulletSpawn;
+    private ParticleSystem gunEffect;
+    private ParticleSystem hitEffect;
 
     protected override void Awake()
     {
         animator = GetComponent<Animator>();
+        gunEffect = transform.GetChild(3).GetComponent<ParticleSystem>();
+        hitEffect = transform.GetChild(4).GetComponent<ParticleSystem>();
         base.Awake();
 
         speed = 10;
@@ -104,6 +108,9 @@ public class PlayerController : BaseCharacterController
             isReloading = true;
             Invoke("Reload", 3f);
         }
+
+        gunEffect.Play();
+        gunEffect.transform.rotation = transform.rotation;
         UIManager.Instance.ChangeCurrentAmmoText(currentAmmo);
         animator.SetTrigger("Shoot");
 
@@ -126,11 +133,15 @@ public class PlayerController : BaseCharacterController
         hp = maxHP;
     }
 
-    public void OnHit(int attackPower)
+    public void OnHit(int attackPower, Vector3 zombiePos)
     {
         hp -= attackPower;
         UIManager.Instance.UpdatePlayerHP(maxHP, hp);
+        //Vector3 effectPos = (zombiePos - transform.position) / 2;
+        //effectPos.y = 1;
 
+        //hitEffect.transform.position = effectPos;
+        hitEffect.Play();
         if (hp < 0)
         {
             OnDead();
