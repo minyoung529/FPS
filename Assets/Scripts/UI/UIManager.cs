@@ -30,6 +30,10 @@ public class UIManager : MonoBehaviour
 
     public PlayerController playerController;
 
+    public GameObject optionUI;
+
+    private bool isPaused;
+
     private void Awake()
     {
         Instance = this;
@@ -40,9 +44,33 @@ public class UIManager : MonoBehaviour
     {
         playerController = player.GetComponent<PlayerController>();
     }
+    private void Update()
+    {
+        if(Input.GetKeyUp(KeyCode.Escape))
+        {
+            optionUI.SetActive(!optionUI.activeSelf);
+            if(optionUI.activeSelf)
+            {
+                isPaused = true;
+                Cursor.lockState = CursorLockMode.None;
+                Time.timeScale = 0f;
+            }
+            else
+            {
+                isPaused = false;
+                Cursor.lockState = CursorLockMode.Locked;
+                Time.timeScale = 1f;
+            }
+        }
+    }
     public void ChangeCurrentAmmoText(int current)
     {
         currentAmmoText.text = current.ToString();
+    }
+
+    public bool GetIsPaused()
+    {
+        return isPaused;
     }
 
     public void ChangeScore(int _score)

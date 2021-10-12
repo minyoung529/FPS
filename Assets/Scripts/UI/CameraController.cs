@@ -28,6 +28,7 @@ public class CameraController : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (UIManager.Instance.GetIsPaused()) return;
         float mouseX = Input.GetAxisRaw("Mouse X");
         float mouseY = -Input.GetAxisRaw("Mouse Y");
         Rotate(mouseX * rotateSensitivity, mouseY * rotateSensitivity);

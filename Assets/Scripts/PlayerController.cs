@@ -73,6 +73,7 @@ public class PlayerController : BaseCharacterController
 
     private void FixedUpdate()
     {
+        if (UIManager.Instance.GetIsPaused()) return;
         if (isDead) return;
         Rotate();
         moveDir = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
