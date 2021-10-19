@@ -5,57 +5,29 @@ using UnityEngine;
 public class PlayerController : BaseCharacterController
 {
     private Animator animator;
-    [SerializeField]
-    private GameObject bulletPrefab;
 
-    [SerializeField] private int currentAmmo;
-    [SerializeField] private int maxAmmo;
-    private bool isReloading;
     private bool isDead;
-    Vector2 screenCenterPos;
     [SerializeField]
-    private LayerMask mouseColliderLayerMask;
-    private Vector3 aimPosition;
-    public Transform bulletSpawn;
-    private ParticleSystem gunEffect;
     private ParticleSystem hitEffect;
+
+    PlayerSkinManager skinManager;
 
     protected override void Awake()
     {
         animator = GetComponent<Animator>();
-        gunEffect = transform.GetChild(3).GetComponent<ParticleSystem>();
-        hitEffect = transform.GetChild(4).GetComponent<ParticleSystem>();
+        skinManager = GetComponent<PlayerSkinManager>();
+        hitEffect = transform.GetChild(3).GetComponent<ParticleSystem>();
         base.Awake();
 
         speed = 10;
         jumpForce = 20;
         gravity = 50;
 
-        maxAmmo = 10;
-        currentAmmo = maxAmmo;
+        
         SetHP();
 
-        screenCenterPos = new Vector2(Screen.width / 2f, Screen.height / 2f);
     }
 
-    void Update()
-    {
-        Ray ray = Camera.main.ScreenPointToRay(screenCenterPos);
-        if (Physics.Raycast(ray, out RaycastHit hit, 999f, mouseColliderLayerMask))
-        {
-            aimPosition = hit.point;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Mouse0) && !isReloading)
-        {
-            ShootBullet();
-        }
-
-        if (Input.GetKeyDown(KeyCode.R) && currentAmmo != maxAmmo)
-        {
-            Invoke("Reload", 3f);
-        }
-    }
 
     private void PlayerJump()
     {
@@ -80,6 +52,8 @@ public class PlayerController : BaseCharacterController
         moveDir *= speed;
         moveDir = transform.TransformDirection(moveDir);
 
+        //ÀÎ»ý
+
         if (Input.GetButton("Jump"))
         {
             PlayerJump();
@@ -100,33 +74,9 @@ public class PlayerController : BaseCharacterController
         animator.SetFloat("speed", controller.velocity.magnitude);
     }
 
-    private void ShootBullet()
-    {
-        currentAmmo--;
+    
 
-        if (currentAmmo == 0)
-        {
-            isReloading = true;
-            Invoke("Reload", 3f);
-        }
-
-        gunEffect.Play();
-        gunEffect.transform.rotation = transform.rotation;
-        UIManager.Instance.ChangeCurrentAmmoText(currentAmmo);
-        animator.SetTrigger("Shoot");
-
-        Vector3 aimDir = (aimPosition - bulletSpawn.position).normalized;
-
-        Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.LookRotation(aimDir, Vector3.up));
-    }
-
-    private void Reload()
-    {
-        isReloading = false;
-        currentAmmo = maxAmmo;
-        UIManager.Instance.ChangeCurrentAmmoText(currentAmmo);
-
-    }
+    
 
     private void SetHP()
     {
@@ -148,6 +98,14 @@ public class PlayerController : BaseCharacterController
             OnDead();
             UIManager.Instance.UpdatePlayerHP(maxHP, hp);
         }
+
+        skinManager.StartInvincible();
+        Invoke("StopInvincible", 3f);
+    }
+
+    private void StopInvincible()
+    {
+        skinManager.StopInvincible();
     }
 
     public bool IsDead()

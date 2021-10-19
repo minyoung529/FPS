@@ -29,6 +29,7 @@ public class BulletController : MonoBehaviour
         {
             case "Enemy":
                 ZombieController ec = collision.gameObject.GetComponent<ZombieController>();
+                if (ec == null) return;
                 int score = ec.OnHit();
                 if (score > 0)
                 {

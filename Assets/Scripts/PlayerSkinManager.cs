@@ -5,19 +5,26 @@ using UnityEngine;
 public class PlayerSkinManager : MonoBehaviour
 {
     public SkinnedMeshRenderer meshRenderer;
+    private bool invincible;
+    private Color originColor;
 
     void Start()
     {
         Color c = meshRenderer.material.color;
-        c.a = 0.5f;
-
-        meshRenderer.material.color = c;
+        originColor = c;
     }
 
     public void StartInvincible()
     {
-
+        StartCoroutine(InvincibleCoroutine());
+        invincible = true;
     }
+
+    public void StopInvincible()
+    {
+        invincible = false;
+    }
+
 
     private IEnumerator InvincibleCoroutine()
     {
@@ -27,22 +34,37 @@ public class PlayerSkinManager : MonoBehaviour
 
         float duration = 0f;
         float elapsedTime = 0f;
+        bool isFadeOut = true;
 
-        while(true)
+        while (invincible)
         {
 
-            if ()
+            if (isFadeOut)
             {
                 elapsedTime += Time.deltaTime;
                 meshRenderer.material.color = Color.Lerp(originColor, minAlphaColor, elapsedTime / duration);
+                if (elapsedTime > duration)
+                {
+                    isFadeOut = false;
+                }
+                yield return null;
             }
 
             else
             {
-                meshRenderer.material.color = Color.Lerp(minAlphaColor, originColor, elapsedTime / duration);
+                elapsedTime -= Time.deltaTime;
+                meshRenderer.material.color = Color.Lerp(minAlphaColor, originColor, duration - elapsedTime / duration);
+
+                if (elapsedTime < duration)
+                {
+                    isFadeOut = false;
+                }
+
+                yield return null;
             }
         }
 
-        
+        meshRenderer.material.color = originColor;
+        yield break;
     }
 }
