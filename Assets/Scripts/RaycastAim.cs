@@ -7,14 +7,13 @@ public class RaycastAim : MonoBehaviour
     [SerializeField] private int currentAmmo;
     [SerializeField] private int maxAmmo;
     private Vector3 aimPosition;
+    private bool isReloading = false;
     public Transform bulletSpawn;
     public Transform cameraAimTarget;
 
     Vector2 screenCenterPos;
     private LayerMask mouseColliderLayerMask;
-    private bool isReloading;
-    [SerializeField]
-    private GameObject bulletPrefab;
+    [SerializeField] private GameObject bulletPrefab;
     private ParticleSystem gunEffect;
     Animator animator;
 
@@ -34,10 +33,9 @@ public class RaycastAim : MonoBehaviour
         screenCenterPos = new Vector2(Screen.width / 2f, Screen.height / 2f);
     }
 
+    // Update is called once per frame
     void Update()
     {
-        //Ray ray = mainCam.ScreenPointToRay(screenCenterPos);
-
         ray.origin = mainCam.transform.position + mainCam.transform.forward*6f;
         ray.direction = cameraAimTarget.position - ray.origin;
 
@@ -84,4 +82,5 @@ public class RaycastAim : MonoBehaviour
 
         Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.LookRotation(aimDir));
     }
+
 }

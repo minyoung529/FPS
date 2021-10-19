@@ -6,26 +6,31 @@ public class PlayerAim : MonoBehaviour
 {
     public float turnSpeed = 15;
     private Camera mainCam;
+    public Transform followTarget;
+    public GameObject playerRoot;
+
 
     public Cinemachine.AxisState xAxis;
     public Cinemachine.AxisState yAxis;
 
-    public Transform followTarget;
-
     void Start()
     {
         mainCam = Camera.main;
+
     }
 
     private void FixedUpdate()
     {
-        
+
+        // Follow Target Rotate for Cam Rotate
         xAxis.Update(Time.fixedDeltaTime);
         yAxis.Update(Time.fixedDeltaTime);
 
         followTarget.eulerAngles = new Vector3(yAxis.Value, xAxis.Value, 0);
 
+        // Player Rotate
         float camY = mainCam.transform.rotation.eulerAngles.y;
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, camY, 0), turnSpeed * Time.deltaTime);
+        playerRoot.transform.rotation = Quaternion.Slerp(playerRoot.transform.rotation, Quaternion.Euler(0, camY, 0), turnSpeed * Time.fixedDeltaTime);
     }
+
 }
