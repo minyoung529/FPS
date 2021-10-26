@@ -4,36 +4,27 @@ using UnityEngine;
 
 public class RaycastAim : MonoBehaviour
 {
-    [SerializeField] private int currentAmmo;
-    [SerializeField] private int maxAmmo;
-    private Vector3 aimPosition;
-    private bool isReloading = false;
-    public Transform bulletSpawn;
     public Transform cameraAimTarget;
-
+    public WeaponController[] weapons;
     Vector2 screenCenterPos;
     private LayerMask mouseColliderLayerMask;
-    [SerializeField] private GameObject bulletPrefab;
-    private ParticleSystem gunEffect;
-    Animator animator;
+
+    private Weapon currentWeapon;
 
     Ray ray;
     RaycastHit raycastInfo;
 
     private Camera mainCam;
 
+    [SerializeField] WeaponController wc;
+
     private void Start()
     {
-        gunEffect = transform.GetChild(2).GetComponent<ParticleSystem>();
-        animator = GetComponent<Animator>();
-        maxAmmo = 10;
-        currentAmmo = maxAmmo;
         mainCam = Camera.main;
-
+        currentWeapon = Weapon.Handgun;
         screenCenterPos = new Vector2(Screen.width / 2f, Screen.height / 2f);
     }
 
-    // Update is called once per frame
     void Update()
     {
         ray.origin = mainCam.transform.position + mainCam.transform.forward*6f;
@@ -41,46 +32,52 @@ public class RaycastAim : MonoBehaviour
 
         if (Physics.Raycast(ray, out raycastInfo, 999f, mouseColliderLayerMask))
         {
-            aimPosition = raycastInfo.point;
+            wc.aimPosition = raycastInfo.point;
         }
 
-        if (Input.GetKeyDown(KeyCode.Mouse0) && !isReloading)
+        if (Input.GetKeyDown(KeyCode.R) && wc.currentAmmo != wc.maxAmmo)
         {
-            ShootBullet();
+            wc.Reloading();
         }
 
-        if (Input.GetKeyDown(KeyCode.R) && currentAmmo != maxAmmo)
+        if(Input.GetKeyUp(KeyCode.Alpha1))
         {
-            Invoke("Reload", 3f);
+            SwapWeapon(Weapon.Handgun);
+        }
+
+        else if (Input.GetKeyUp(KeyCode.Alpha2))
+        {
+            SwapWeapon(Weapon.Rifle);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Mouse0) && !wc.isReloading)
+        {
+            wc.ShootBullet();
         }
     }
 
-    private void Reload()
+    private void SwapWeapon(Weapon weaponType)
     {
-        isReloading = false;
-        currentAmmo = maxAmmo;
-        UIManager.Instance.ChangeCurrentAmmoText(currentAmmo);
-
-    }
-
-    private void ShootBullet()
-    {
-        currentAmmo--;
-
-        if (currentAmmo == 0)
+        if(weaponType == currentWeapon)
         {
-            isReloading = true;
-            Invoke("Reload", 3f);
+            return;
         }
 
-        gunEffect.Play();
-        gunEffect.transform.rotation = transform.rotation;
-        UIManager.Instance.ChangeCurrentAmmoText(currentAmmo);
-        animator.SetTrigger("Shoot");
+        wc = weapons[(int)weaponType];
 
-        Vector3 aimDir = (aimPosition - bulletSpawn.position).normalized;
+        weapons[(int)weaponType].gameObject.SetActive(true);
+        weapons[(int)currentWeapon].gameObject.SetActive(false);
 
-        Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.LookRotation(aimDir));
+        //switch (weapon)
+        //{
+        //    case Weapon.Handgun:
+        //        break;
+        //    case Weapon.Rifle:
+        //        break;
+        //}
+
+        currentWeapon = weaponType;
+
+        UIManager.Instance.ChangeCurrentAmmoText(wc.currentAmmo, wc.maxAmmo);
     }
-
 }

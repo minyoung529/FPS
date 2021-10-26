@@ -48,7 +48,7 @@ public class ZombieController : BaseCharacterController
 
             else
             {
-                if(playerInAttack)
+                if (playerInAttack)
                 {
                     Attack(targetPlayerController);
                 }
@@ -111,9 +111,14 @@ public class ZombieController : BaseCharacterController
         gameObject.SetActive(false);
     }
 
-    internal int OnHit()
+    internal int OnHit(int damage)
     {
-        hp--;
+        hp -= damage;
+
+        if (hp < 0)
+        {
+            hp = 0;
+        }
         hud.value--;
 
         particle.Play();
@@ -199,7 +204,7 @@ public class ZombieController : BaseCharacterController
         navMeshAgent.isStopped = true;
         targetPlayerController = playerController;
 
-        playerController.OnHit(attackPower,transform.position);
+        playerController.OnHit(attackPower, transform.position);
         Invoke("AttackEndAction", 2f);
     }
 

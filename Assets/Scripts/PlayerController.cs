@@ -16,7 +16,6 @@ public class PlayerController : BaseCharacterController
     {
         animator = GetComponent<Animator>();
         skinManager = GetComponent<PlayerSkinManager>();
-        hitEffect = transform.GetChild(3).GetComponent<ParticleSystem>();
         base.Awake();
 
         speed = 10;
@@ -39,8 +38,8 @@ public class PlayerController : BaseCharacterController
 
     private void Rotate()
     {
-        transform.rotation =
-            Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, Camera.main.transform.eulerAngles.z);
+        transform.rotation = Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, Camera.main.transform.eulerAngles.z);
+       
     }
 
     private void FixedUpdate()
@@ -51,8 +50,6 @@ public class PlayerController : BaseCharacterController
         moveDir = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
         moveDir *= speed;
         moveDir = transform.TransformDirection(moveDir);
-
-        //ÀÎ»ý
 
         if (Input.GetButton("Jump"))
         {
@@ -75,9 +72,6 @@ public class PlayerController : BaseCharacterController
     }
 
     
-
-    
-
     private void SetHP()
     {
         maxHP = 20;

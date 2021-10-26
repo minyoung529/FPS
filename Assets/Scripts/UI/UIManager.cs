@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     private const string RECORD_KEY = "RECORD_SCORE";
     //[SerializeField] private Text currentAmmoText;
     [SerializeField] private TextMeshProUGUI currentAmmoText;
+    [SerializeField] private TextMeshProUGUI maxAmmoText;
     [SerializeField] private Camera uiCamera;
     [SerializeField] private RectTransform canvas;
     [SerializeField] private RectTransform hpBar;
@@ -63,9 +64,10 @@ public class UIManager : MonoBehaviour
             }
         }
     }
-    public void ChangeCurrentAmmoText(int current)
+    public void ChangeCurrentAmmoText(int current,int max)
     {
         currentAmmoText.text = current.ToString();
+        maxAmmoText.text = max.ToString();
     }
 
     public bool GetIsPaused()

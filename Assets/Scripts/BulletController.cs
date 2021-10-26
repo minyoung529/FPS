@@ -8,7 +8,7 @@ public class BulletController : MonoBehaviour
     private Rigidbody rigid = null;
     private float maxDistance = 400;
     private Vector3 originPos;
-
+    int damage;
 
     private void Awake()
     {
@@ -30,7 +30,7 @@ public class BulletController : MonoBehaviour
             case "Enemy":
                 ZombieController ec = collision.gameObject.GetComponent<ZombieController>();
                 if (ec == null) return;
-                int score = ec.OnHit();
+                int score = ec.OnHit(damage);
                 if (score > 0)
                 {
                     UIManager.Instance.ChangeScore(score);
