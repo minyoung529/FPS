@@ -7,6 +7,8 @@ using System.Net;
 
 public class NetServer : MonoBehaviour
 {
+    private Socket socket;
+
     private TcpListener server;
     private bool serverStarted = false;
 

@@ -9,7 +9,6 @@ using UnityEngine.UI;
 
 public class NetClient : MonoBehaviour
 {
-
     public InputField inputIP;
     public InputField inputPort;
 
