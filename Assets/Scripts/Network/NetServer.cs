@@ -12,10 +12,15 @@ public class NetServer : MonoBehaviour
 
     private Socket socket;
 
+    private string localIP;
+
     private TcpListener server;
     private bool serverStarted = false;
 
     private List<ClientToken> clients;
+
+    private string ip;
+    private string port;
 
     private void Awake()
     {
@@ -25,11 +30,26 @@ public class NetServer : MonoBehaviour
     private void Start()
     {
         clients = new List<ClientToken>();
-        //InitializeServer();
+        GetLocalIP();
     }
-    public void InitializeServer()
+
+    void GetLocalIP()
     {
-        int port = 3333;
+        IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+
+        foreach(IPAddress ip in host.AddressList)
+        {
+            if(ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                localIP = ip.ToString();
+                ChatManager.Instance?.SetLocalIP(localIP);
+
+            }
+        }
+    }
+    public void InitializeServer(int port)
+    {
+        this.port = port.ToString();
 
         try
         {
@@ -81,35 +101,36 @@ public class NetServer : MonoBehaviour
 
         if (!serverStarted) return;
 
-        foreach(ClientToken client in clients)
+        foreach (ClientToken client in clients)
         {
             NetworkStream stream = client.tcp.GetStream();
 
-            if(stream.DataAvailable)
+            if (stream.DataAvailable)
             {
                 string data = new StreamReader(stream, true).ReadLine();
 
-                if(data != null)
+                if (data != null)
                 {
-                    Broadcast(data);
+                    Broadcast(data, client.clientName);
                 }
             }
         }
     }
 
     //Server -> All Clients
-    private void Broadcast(string data)
+    private void Broadcast(string data, string clientName)
     {
-        foreach(ClientToken client in clients)
+        foreach (ClientToken client in clients)
         {
             try
             {
+                string newData = clientName + '&' + data;
                 StreamWriter writer = new StreamWriter(client.tcp.GetStream());
-                writer.WriteLine(data);
+                writer.WriteLine(newData);
                 writer.Flush();
             }
 
-            catch(SocketException e)
+            catch (SocketException e)
             {
                 Debug.Log(e);
             }

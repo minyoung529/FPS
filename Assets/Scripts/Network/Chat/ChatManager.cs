@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,19 +9,31 @@ public class ChatManager : MonoBehaviour
 {
     public static ChatManager Instance;
 
+    #region SERVER
     public Button btnServerStart;
     public Button btnServerClose;
 
+    public Text txtServerStatus;
+    public Text txtServerLocalIP;
+
+    public InputField inputServerPort;
+    #endregion
+
+    #region SERVER
     public Button btnClientConnect;
     public Button btnClientDisconnect;
 
-    public Text txtServerStatus;
     public Text txtClientStatus;
 
-    public InputField inputChat;
+    public InputField inputIP;
+    public InputField inputPort;
+    #endregion
 
+    #region CHAT
+    public InputField inputChat;
     public VerticalLayoutGroup contentView;
     public Text chatPrefab;
+    #endregion
 
     private void Awake()
     {
@@ -49,6 +63,10 @@ public class ChatManager : MonoBehaviour
         txtServerStatus.text = $"Status: {status}";
     }
 
+    public void SetLocalIP(string ip)
+    {
+        txtServerLocalIP.text = ip;
+    }
     public void OnChangeClientStatus(bool clientConnected)
     {
         btnClientConnect.interactable = !clientConnected;
@@ -58,9 +76,32 @@ public class ChatManager : MonoBehaviour
         txtClientStatus.text = $"Status: {status}";
     }
 
-    public void OnReadChat(string data)
+    public void OnReadChat(string name, StringBuilder chat)
     {
         Text newChat = Instantiate(chatPrefab, contentView.transform);
-        newChat.text = data;
+        newChat.text = name + ": " + chat;
+
+    }
+
+    public void ConnectToServer()
+    {
+        string ip = inputIP.text;
+        string port = inputPort.text;
+
+        NetClient.Instance.ConnectToServer(ip, port);
+    }
+
+    public void StartServer()
+    {
+        try
+        {
+            int port = int.Parse(inputServerPort.text);
+            NetServer.Instance.InitializeServer(port);
+        }
+        
+        catch(Exception)
+        {
+            throw;
+        }
     }
 }

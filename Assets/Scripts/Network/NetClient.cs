@@ -6,13 +6,11 @@ using System.Net.Sockets;
 using System.Net;
 using System.IO;
 using UnityEngine.UI;
+using System.Text;
 
 public class NetClient : MonoBehaviour
 {
     public static NetClient Instance;
-
-    public InputField inputIP;
-    public InputField inputPort;
 
     private bool connected = false;
 
@@ -43,13 +41,25 @@ public class NetClient : MonoBehaviour
 
     private void OnReadData(string data)
     {
-        ChatManager.Instance?.OnReadChat(data);
-    }
-    public void ConnectToServer()
-    {
-        string ip = inputIP.text;
-        string port = inputPort.text;
+        string[] datas = data.Split('&');
+        StringBuilder chat = new StringBuilder();
+        string clientName = datas[0];
 
+        for (int i = 1; i < datas.Length; i++)
+        {
+            chat.Append(datas[i]);
+
+            if (i>1)
+            {
+                chat.Append("&");
+            }
+        }
+        
+
+        ChatManager.Instance?.OnReadChat(clientName,chat);
+    }
+    public void ConnectToServer(string ip, string port)
+    {
         if (ip == "" || port == "")
         {
             Debug.Log("sd");
