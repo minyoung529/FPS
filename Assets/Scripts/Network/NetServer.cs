@@ -10,7 +10,7 @@ public class NetServer : MonoBehaviour
 {
     public static NetServer Instance;
 
-    private Socket socket;
+    private ClientToken socket;
 
     private string localIP;
 
@@ -21,6 +21,9 @@ public class NetServer : MonoBehaviour
 
     private string ip;
     private string port;
+
+    private byte[] data = new byte[1024];
+    //보통 1024
 
     private void Awake()
     {
@@ -37,9 +40,9 @@ public class NetServer : MonoBehaviour
     {
         IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
 
-        foreach(IPAddress ip in host.AddressList)
+        foreach (IPAddress ip in host.AddressList)
         {
-            if(ip.AddressFamily == AddressFamily.InterNetwork)
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
             {
                 localIP = ip.ToString();
                 ChatManager.Instance?.SetLocalIP(localIP);
@@ -97,37 +100,82 @@ public class NetServer : MonoBehaviour
 
     private void Update()
     {
-        //im really sober
-
         if (!serverStarted) return;
 
         foreach (ClientToken client in clients)
         {
-            NetworkStream stream = client.tcp.GetStream();
-
-            if (stream.DataAvailable)
+            try
             {
-                string data = new StreamReader(stream, true).ReadLine();
+                NetworkStream stream = client.tcp.GetStream();
 
-                if (data != null)
+                if (stream.DataAvailable)
                 {
-                    Broadcast(data, client.clientName);
+                    //string data = new StreamReader(stream, true).ReadLine();
+                    int length = stream.Read(data, 0, data.Length);
+                    //위엔 껍데기
+
+                    byte[] readData = new byte[length];
+                    //여기가 실제 데이터를 담을 곳
+                    Array.Copy(data, 0, readData, 0, length);
+
+                    if (readData != null)
+                    {
+                        NetPacket packet = new NetPacket(readData);
+                        OnReadData(packet, client);
+                    }
                 }
             }
+            catch (SocketException e)
+            {
+                Debug.Log(e);
+            }
+
         }
     }
 
+    private void OnReadData(NetPacket packet, ClientToken token)
+    {
+        //string[] datas = data.Split('&');
+        //string broadCastData = "";
+        //string protocol = "";
+
+        NetPacket broadcastPacket = new NetPacket();
+        switch (packet.protocol)
+        {
+            case NetProtocol.REQ_NICKNAME:
+                string nickname = packet.PopString();
+                token.clientName = nickname;
+                broadcastPacket = new NetPacket(NetProtocol.RES_NICKNAME, nickname);
+                return;
+
+            case NetProtocol.REQ_CHAT:
+                string chat = packet.PopString();
+                string newData = token.clientName + "&" + chat;
+                broadcastPacket = new NetPacket(NetProtocol.RES_CHAT, newData);
+                //protocol = NetProtocol.REQ_CHAT;
+                //broadCastData = datas[1];
+                break;
+        }
+
+        Broadcast(broadcastPacket);
+    }
     //Server -> All Clients
-    private void Broadcast(string data, string clientName)
+    private void Broadcast(NetPacket packet)
     {
         foreach (ClientToken client in clients)
         {
+            //보낼 때 새로 만들어서 똑같이 보내ㅂ주면 되겠져
             try
             {
-                string newData = clientName + '&' + data;
-                StreamWriter writer = new StreamWriter(client.tcp.GetStream());
-                writer.WriteLine(newData);
-                writer.Flush();
+                //string newData = protocol + "&" + clientName + "&" + data;
+                //StreamWriter writer = new StreamWriter(client.tcp.GetStream());
+
+                //writer.WriteLine(newData);
+                //writer.Flush();
+
+                NetworkStream stream = client.tcp.GetStream();
+                stream.Write(packet.packetData, 0, packet.packetData.Length);
+                stream.Flush();
             }
 
             catch (SocketException e)

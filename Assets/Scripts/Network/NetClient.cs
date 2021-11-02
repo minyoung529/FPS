@@ -14,10 +14,10 @@ public class NetClient : MonoBehaviour
 
     private bool connected = false;
 
-    public TcpClient socket;
+    public ClientToken clientToken;
     public NetworkStream stream;
-    public StreamWriter writer;
-    public StreamReader reader;
+
+    private byte[] data = new byte[1024];
 
     private void Awake()
     {
@@ -30,35 +30,70 @@ public class NetClient : MonoBehaviour
 
         if (stream.DataAvailable)
         {
-            string data = reader.ReadLine();
+            //string data = reader.ReadLine();
+            int length = stream.Read(data, 0, data.Length);
 
-            if (data != null)
+            byte[] readData = new byte[length];
+
+            Array.Copy(data, 0, readData, 0, length);
+
+            if (readData != null)
             {
-                OnReadData(data);
+                NetPacket packet = new NetPacket(readData);
+                OnReadData(packet);
+                Debug.Log("sdf");
+
             }
         }
     }
-
-    private void OnReadData(string data)
+    //데이터 파씽
+    private void OnReadData(NetPacket packet)
     {
-        string[] datas = data.Split('&');
-        StringBuilder chat = new StringBuilder();
-        string clientName = datas[0];
+        //지나ㅉ 거짓말 안 치고 하나도 모르겠ㅇ요 진짜 하나도 진짜 하나도ㅑ 진짜 진짜 진짜 하나도 진짜 하나도
 
-        for (int i = 1; i < datas.Length; i++)
+        Debug.Log("sdf");
+
+        switch (packet.protocol)
         {
-            chat.Append(datas[i]);
+            case NetProtocol.RES_NICKNAME:
 
-            if (i>1)
-            {
-                chat.Append("&");
-            }
+                //if (IsChatScene())
+                //{
+                Debug.Log("sdf");
+
+                string message = packet.PopString() + "님이 입장하셨습니다!";
+                    ChatManager.Instance?.OnUserJoin(message);
+                //}
+
+                break;
+
+            case NetProtocol.RES_CHAT:
+                Debug.Log("e=dif");
+
+                //nickname & chat
+                string[] datas = packet.PopString().Split('&');
+
+                StringBuilder chat = new StringBuilder();
+
+                for (int i = 1; i < datas.Length; i++)
+                {
+                    chat.Append(datas[i]);
+
+                    if (i > 1)
+                    {
+                        chat.Append("&");
+                    }
+                }
+                ChatManager.Instance?.OnReadChat(datas[0], chat);
+                break;
         }
-        
-
-        ChatManager.Instance?.OnReadChat(clientName,chat);
     }
-    public void ConnectToServer(string ip, string port)
+
+    private bool IsChatScene()
+    {
+        return ChatManager.Instance != null;
+    }
+    public void ConnectToServer(string ip, string port, string nickName)
     {
         if (ip == "" || port == "")
         {
@@ -68,15 +103,15 @@ public class NetClient : MonoBehaviour
 
         try
         {
-            socket = new TcpClient(ip, int.Parse(port));
-            stream = socket.GetStream();
+            clientToken = new ClientToken(new TcpClient(ip, int.Parse(port)), nickName);
+            //socket = new TcpClient(ip, int.Parse(port));
+            stream = clientToken.tcp.GetStream();
 
             //쓸 때는 writer를 받을 때는 reader를 씀
-            writer = new StreamWriter(stream);
-            reader = new StreamReader(stream);
+            //writer = new StreamWriter(stream);
+            //reader = new StreamReader(stream);
 
-            ChangeStatis(true);
-
+            OnConnected();
         }
 
         catch (Exception e)
@@ -85,28 +120,51 @@ public class NetClient : MonoBehaviour
         }
     }
 
+    // Set Nick Name -> Connect To Server -> Send NickName
+    private void OnConnected()
+    {
+        ChangeStatus(true);
+        SendNickName();
+    }
+
     public void DisconnectToServer()
     {
-        if (socket == null) return;
+        if (clientToken == null) return;
 
-        socket.Close();
-        socket = null;
+        clientToken.tcp.Close();
+        clientToken = null;
 
-        ChangeStatis(false);
+        ChangeStatus(false);
     }
 
 
-    private void ChangeStatis(bool status)
+    private void ChangeStatus(bool status)
     {
         connected = status;
         ChatManager.Instance?.OnChangeClientStatus(connected);
     }
 
-    public void SendString(string msg)
+    #region Send
+    public void SendChat(string msg)
+    {
+        SendData(NetProtocol.REQ_CHAT, msg);
+
+    }
+
+    public void SendNickName()
+    {
+        SendData(NetProtocol.REQ_NICKNAME, clientToken.clientName);
+
+    }
+
+    private void SendData(int protocol, string data)
     {
         if (!connected) return;
 
-        writer.WriteLine(msg);
-        writer.Flush();
+        NetPacket packet = new NetPacket(protocol, data);
+
+        stream.Write(packet.packetData, 0, packet.packetData.Length);
+        stream.Flush();
     }
+    #endregion
 }

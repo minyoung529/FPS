@@ -19,7 +19,7 @@ public class ChatManager : MonoBehaviour
     public InputField inputServerPort;
     #endregion
 
-    #region SERVER
+    #region CLIENT
     public Button btnClientConnect;
     public Button btnClientDisconnect;
 
@@ -27,6 +27,7 @@ public class ChatManager : MonoBehaviour
 
     public InputField inputIP;
     public InputField inputPort;
+    public InputField inputNickName;
     #endregion
 
     #region CHAT
@@ -51,7 +52,7 @@ public class ChatManager : MonoBehaviour
     {
         string chat = inputChat.text;
         if (chat == "") return;
-        NetClient.Instance.SendString(chat);
+        NetClient.Instance.SendChat(chat);
         inputChat.text = "";
     }
     public void OnChangeServerStatus(bool serverStarted)
@@ -75,7 +76,13 @@ public class ChatManager : MonoBehaviour
         string status = clientConnected ? "CONNECT" : "DISCONNECT";
         txtClientStatus.text = $"Status: {status}";
     }
+    public void OnUserJoin(string msg)
+    {
+        Debug.Log("sdf");
+        Text newChat = Instantiate(chatPrefab, contentView.transform);
+        newChat.text = msg;
 
+    }
     public void OnReadChat(string name, StringBuilder chat)
     {
         Text newChat = Instantiate(chatPrefab, contentView.transform);
@@ -87,8 +94,15 @@ public class ChatManager : MonoBehaviour
     {
         string ip = inputIP.text;
         string port = inputPort.text;
+        string nickName = inputNickName.text;
 
-        NetClient.Instance.ConnectToServer(ip, port);
+        if (nickName == "")
+        {
+            Debug.Log("닉네임 입력하세여");
+            return;
+        }
+
+        NetClient.Instance.ConnectToServer(ip, port,nickName);
     }
 
     public void StartServer()
