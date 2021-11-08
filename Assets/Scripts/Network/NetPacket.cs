@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using UnityEngine;
 
@@ -15,17 +17,11 @@ public class NetPacket
     public NetPacket() { }
     public NetPacket(int protocol, string data)
     {
-        //int to byteArray
-        byte[] protocolHeader = BitConverter.GetBytes(protocol);
+        this.protocol = protocol;
 
         //string to byteArray
         byte[] body = StringToByteArray(data);
-
-        //length of byte array
-        int bodyLength = body.Length;
-        byte[] bodyLengthHeader = BitConverter.GetBytes(bodyLength);
-
-        packetData = new byte[protocolHeader.Length + bodyLength + bodyLengthHeader.Length];
+        MakePacketData(body);
 
         // packet Data = [ 빈 값 ]
         //      sourceArray [ 0 ] => 전체를 보냄
@@ -35,12 +31,6 @@ public class NetPacket
 
         //protocolHeader Length : 4 byte
         // packet Data = [][][][] <= Protocol [][][][]  <= length  [][][][][][]~~ <= Data
-        Array.Copy(protocolHeader, 0, packetData, 0, protocolHeader.Length);
-
-        Array.Copy(bodyLengthHeader, 0, packetData, protocolHeader.Length, bodyLengthHeader.Length);
-
-        Array.Copy(body, 0, packetData, protocolHeader.Length + bodyLengthHeader.Length, body.Length);
-
     }
 
     //stream writer, reader는 이런 과정을 거치고 있음
@@ -60,10 +50,50 @@ public class NetPacket
     public NetPacket(byte[] bytes)
     {
         packetData = bytes;
-        //byte[] : 0~ 3   => int
+        //byte[] : 0 ~ 3   => int
 
         protocol = BitConverter.ToInt32(bytes, 0);
         bodyLength = BitConverter.ToInt32(bytes, /*sizeof(int)*/4); // 4
+    }
+
+    public NetPacket(int protocol, int data)
+    {
+        this.protocol = protocol;
+        byte[] body = BitConverter.GetBytes(data);
+
+        MakePacketData(body);
+    }
+
+    public NetPacket(int protocol, object obj)
+    {
+        //obj 우어어우어어우어어어우어우어우어
+        this.protocol = protocol;
+
+        byte[] body = ObjectToByteArray(obj);
+        MakePacketData(body);
+    }
+
+    private void MakePacketData(byte[] body)
+    {
+        byte[] protocolHeader = BitConverter.GetBytes(protocol);
+
+        int bodyLength = body.Length;
+        byte[] bodyLengthHeader = BitConverter.GetBytes(bodyLength);
+
+        packetData = new byte[protocolHeader.Length + bodyLengthHeader.Length + body.Length];
+        Array.Copy(protocolHeader, 0, packetData, 0, protocolHeader.Length);
+        Array.Copy(bodyLengthHeader, 0, packetData, protocolHeader.Length, bodyLengthHeader.Length);
+        Array.Copy(body, 0, packetData, protocolHeader.Length + bodyLengthHeader.Length, body.Length);
+
+    }
+
+    private byte[] ObjectToByteArray(object obj)
+    {
+        BinaryFormatter bf = new BinaryFormatter();
+        MemoryStream ms = new MemoryStream();
+
+        bf.Serialize(ms, obj);
+        return ms.ToArray();
     }
 
     //원하는 걸 뽑는거
@@ -78,4 +108,17 @@ public class NetPacket
         return ByteArrayToString(body);
     }
 
+    public object PopObject()
+    {
+        BinaryFormatter bf = new BinaryFormatter();
+        MemoryStream ms = new MemoryStream();
+        ms.Write(packetData, 8, bodyLength);
+        ms.Seek(0, SeekOrigin.Begin);
+        return bf.Deserialize(ms);
+    }
+
+    internal int PopInt()
+    {
+        return BitConverter.ToInt32(packetData, 0);
+    }
 }

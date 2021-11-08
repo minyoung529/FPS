@@ -7,6 +7,9 @@ public static class NetProtocol
     // req 보내는쪽
     // res 받는 쪽응답
 
+    public const int SYS_CLIENT_LIST = -1;
+    public const int SYS_CLIENT_DISCONNECT = -2;
+
     public const int REQ_NICKNAME = 1;
     public const int REQ_CHAT = 2;
 

@@ -18,11 +18,14 @@ public class NetServer : MonoBehaviour
     private bool serverStarted = false;
 
     private List<ClientToken> clients;
+    private List<ClientToken> disconnectList;
 
     private string ip;
     private string port;
 
     private byte[] data = new byte[1024];
+
+    private int nextId = 0;
     //보통 1024
 
     private void Awake()
@@ -33,6 +36,7 @@ public class NetServer : MonoBehaviour
     private void Start()
     {
         clients = new List<ClientToken>();
+        disconnectList = new List<ClientToken>();
         GetLocalIP();
     }
 
@@ -87,7 +91,7 @@ public class NetServer : MonoBehaviour
     {
         //listner이 상대 클라이언트에 대한 정보
         TcpListener listner = (TcpListener)ar.AsyncState;
-        clients.Add(new ClientToken(listner.EndAcceptTcpClient(ar), "Player" + clients.Count));
+        clients.Add(new ClientToken(listner.EndAcceptTcpClient(ar), "Player" + nextId++));
         StartListening();
     }
 
@@ -104,6 +108,11 @@ public class NetServer : MonoBehaviour
 
         foreach (ClientToken client in clients)
         {
+            if (!IsConnected(client.tcp))
+            {
+                disconnectList.Add(client);
+                continue;
+            }
             try
             {
                 NetworkStream stream = client.tcp.GetStream();
@@ -130,6 +139,16 @@ public class NetServer : MonoBehaviour
                 Debug.Log(e);
             }
 
+            for (int i = 0; i < disconnectList.Count; i++)
+            {
+                clients.Remove(disconnectList[i]);
+                Broadcast(new NetPacket());
+            }
+
+            if (disconnectList.Count > 0)
+            {
+                disconnectList.Clear();
+            }
         }
     }
 
@@ -145,19 +164,52 @@ public class NetServer : MonoBehaviour
             case NetProtocol.REQ_NICKNAME:
                 string nickname = packet.PopString();
                 token.clientName = nickname;
-                broadcastPacket = new NetPacket(NetProtocol.RES_NICKNAME, nickname);
-                return;
+                broadcastPacket = new NetPacket(NetProtocol.RES_NICKNAME, nickname + "&" + token.index);
+                SendClientList(token);
+                break;
 
             case NetProtocol.REQ_CHAT:
                 string chat = packet.PopString();
                 string newData = token.clientName + "&" + chat;
                 broadcastPacket = new NetPacket(NetProtocol.RES_CHAT, newData);
-                //protocol = NetProtocol.REQ_CHAT;
-                //broadCastData = datas[1];
                 break;
         }
 
         Broadcast(broadcastPacket);
+    }
+
+    private void SendClientList(ClientToken token)
+    {
+        string[] names = new string[clients.Count];
+        for (int i = 0; i < clients.Count; i++)
+        {
+            names[i] = clients[i].clientName + "&" + clients[i].index;
+        }
+        SendData(token, new NetPacket(NetProtocol.SYS_CLIENT_LIST, names));
+
+    }
+    private bool IsConnected(TcpClient c)
+    {
+        try
+        {
+            if (c != null && c.Client != null && c.Connected)
+            {
+                if (c.Client.Poll(0, SelectMode.SelectRead))
+                {
+                    return !(c.Client.Receive(new byte[1], SocketFlags.Peek) == 0);
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        catch
+        {
+            return false;
+        }
     }
     //Server -> All Clients
     private void Broadcast(NetPacket packet)
@@ -167,12 +219,6 @@ public class NetServer : MonoBehaviour
             //보낼 때 새로 만들어서 똑같이 보내ㅂ주면 되겠져
             try
             {
-                //string newData = protocol + "&" + clientName + "&" + data;
-                //StreamWriter writer = new StreamWriter(client.tcp.GetStream());
-
-                //writer.WriteLine(newData);
-                //writer.Flush();
-
                 NetworkStream stream = client.tcp.GetStream();
                 stream.Write(packet.packetData, 0, packet.packetData.Length);
                 stream.Flush();
@@ -184,16 +230,40 @@ public class NetServer : MonoBehaviour
             }
         }
     }
+
+    private void SendData(ClientToken client, NetPacket packet)
+    {
+        try
+        {
+            NetworkStream stream = client.tcp.GetStream();
+            stream.Write(packet.packetData, 0, packet.packetData.Length);
+            stream.Flush();
+        }
+
+        catch (SocketException e)
+        {
+            Debug.Log(e);
+        }
+    }
 }
 
+[Serializable]
 public class ClientToken
 {
     public TcpClient tcp;
+    public int index = -1;
     public string clientName;
 
-    public ClientToken(TcpClient tc, string name)
+    public ClientToken(TcpClient tc, string name, int id = -1)
     {
         tcp = tc;
         clientName = name;
+        index = id;
+    }
+
+    public ClientToken(string name, int id = -1)
+    {
+        clientName = name;
+        index = id;
     }
 }

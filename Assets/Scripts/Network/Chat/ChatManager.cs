@@ -22,12 +22,16 @@ public class ChatManager : MonoBehaviour
     #region CLIENT
     public Button btnClientConnect;
     public Button btnClientDisconnect;
+    public VerticalLayoutGroup userListContentView;
+    public Text userCellPref;
 
     public Text txtClientStatus;
 
     public InputField inputIP;
     public InputField inputPort;
     public InputField inputNickName;
+
+    public bool firstJoin = true;
     #endregion
 
     #region CHAT
@@ -76,12 +80,52 @@ public class ChatManager : MonoBehaviour
         string status = clientConnected ? "CONNECT" : "DISCONNECT";
         txtClientStatus.text = $"Status: {status}";
     }
-    public void OnUserJoin(string msg)
+    public void OnUserJoin(string userName)
     {
-        Debug.Log("sdf");
+        string msg = userName+"¥‘¿Ã ¿‘¿Â«œºÃΩ¿¥œ¥Ÿ";
         Text newChat = Instantiate(chatPrefab, contentView.transform);
         newChat.text = msg;
 
+        if (firstJoin)
+        {
+            firstJoin = true;
+        }
+        else
+        {
+            return;
+        }
+        AddUserToList(userName);
+    }
+
+    public void OnUserDisconnect(string userName)
+    {
+        Text[] names = userListContentView.transform.GetComponentsInChildren<Text>();
+
+        for(int i = 0; i<names.Length; i++)
+        {
+            if(names[i].text == userName)
+            {
+                Destroy(names[i]);
+                break;
+            }
+        }
+
+        Text newChat = Instantiate(chatPrefab, contentView.transform);
+        newChat.text = userName + "¥‘¿Ã ≥™∞¨Ω¿¥œ¥Ÿ!";
+    }
+
+    public void OnGetClientList(string[] clientNames)
+    {
+        foreach(string name in clientNames)
+        {
+            AddUserToList(name);
+        }
+    }
+
+    private void AddUserToList(string userName)
+    {
+        Text clientName = Instantiate(userCellPref, userListContentView.transform);
+        clientName.text = name;
     }
     public void OnReadChat(string name, StringBuilder chat)
     {

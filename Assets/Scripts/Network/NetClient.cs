@@ -14,14 +14,19 @@ public class NetClient : MonoBehaviour
 
     private bool connected = false;
 
-    public ClientToken clientToken;
+    public ClientToken serverToken;
     public NetworkStream stream;
 
     private byte[] data = new byte[1024];
-
+    private List<ClientToken> clients;
     private void Awake()
     {
         Instance = this;
+    }
+
+    private void Start()
+    {
+        clients = new List<ClientToken>();
     }
 
     private void Update()
@@ -39,38 +44,59 @@ public class NetClient : MonoBehaviour
 
             if (readData != null)
             {
-                NetPacket packet = new NetPacket(readData);
-                OnReadData(packet);
+                SplitBytesToPackets(readData);
                 Debug.Log("sdf");
 
             }
         }
     }
-    //데이터 파씽
+
+    private void SplitBytesToPackets(byte[] readData)
+    {
+        int packetStartPos = 0;
+
+        while (readData.Length > packetStartPos)
+        {
+            int bodyLength = BitConverter.ToInt32(readData, 4 + packetStartPos);
+            int packetLength = bodyLength + 8;
+            byte[] packetBytes = new byte[packetLength];
+            Array.Copy(readData, packetStartPos, packetBytes, 0, packetLength);
+
+            NetPacket packet = new NetPacket(packetBytes);
+            OnReadData(packet);
+
+            packetStartPos += packetLength;
+        }
+    }
+    //데이터 파싱 파싱파싱지나ㅉ싸울래
     private void OnReadData(NetPacket packet)
     {
-        //지나ㅉ 거짓말 안 치고 하나도 모르겠ㅇ요 진짜 하나도 진짜 하나도ㅑ 진짜 진짜 진짜 하나도 진짜 하나도
-
-        Debug.Log("sdf");
-
         switch (packet.protocol)
         {
-            case NetProtocol.RES_NICKNAME:
+            case NetProtocol.SYS_CLIENT_LIST:
+                string[] clientsNames = (string[])packet.PopObject();
 
-                //if (IsChatScene())
-                //{
-                Debug.Log("sdf");
+                if (IsChatScene())
+                {
+                    for (int i = 0; i < clientsNames.Length; i++)
+                    {
+                        if (i == clientsNames.Length - 1) break;
+                        ClientToken client = AddClient(clientsNames[i]);
+                        
+                        ChatManager.Instance.OnUserJoin(client.clientName);
+                    }
+                }
+                break;
 
-                string message = packet.PopString() + "님이 입장하셨습니다!";
-                    ChatManager.Instance?.OnUserJoin(message);
-                //}
+            case NetProtocol.RES_NICKNAME: // user join
+                if (IsChatScene())
+                {
+                    ChatManager.Instance.OnUserJoin(AddClient(packet.PopString()).clientName);
+                }
 
                 break;
 
             case NetProtocol.RES_CHAT:
-                Debug.Log("e=dif");
-
-                //nickname & chat
                 string[] datas = packet.PopString().Split('&');
 
                 StringBuilder chat = new StringBuilder();
@@ -86,9 +112,33 @@ public class NetClient : MonoBehaviour
                 }
                 ChatManager.Instance?.OnReadChat(datas[0], chat);
                 break;
+
+            case NetProtocol.SYS_CLIENT_DISCONNECT:
+                int disconnectedId = packet.PopInt();
+                string dName = clients.Find(client => client.index == disconnectedId).clientName;
+
+                if(IsChatScene())
+                {
+                    ChatManager.Instance.OnUserDisconnect(dName);
+                }
+                break;
         }
     }
 
+    private ClientToken AddClient(string cn)
+    {
+        string[] nameIndex = cn.Split('&');
+        int id = int.Parse(nameIndex[nameIndex.Length - 1]);
+        string clientName = "";
+
+        for (int j = 0; j < nameIndex.Length - 1; j++)
+        {
+            clientName += nameIndex[j];
+        }
+        ClientToken token = new ClientToken(clientName, id);
+        clients.Add(token);
+        return token;
+    }
     private bool IsChatScene()
     {
         return ChatManager.Instance != null;
@@ -103,9 +153,9 @@ public class NetClient : MonoBehaviour
 
         try
         {
-            clientToken = new ClientToken(new TcpClient(ip, int.Parse(port)), nickName);
+            serverToken = new ClientToken(new TcpClient(ip, int.Parse(port)), nickName, -1);
             //socket = new TcpClient(ip, int.Parse(port));
-            stream = clientToken.tcp.GetStream();
+            stream = serverToken.tcp.GetStream();
 
             //쓸 때는 writer를 받을 때는 reader를 씀
             //writer = new StreamWriter(stream);
@@ -129,10 +179,10 @@ public class NetClient : MonoBehaviour
 
     public void DisconnectToServer()
     {
-        if (clientToken == null) return;
+        if (serverToken == null) return;
 
-        clientToken.tcp.Close();
-        clientToken = null;
+        serverToken.tcp.Close();
+        serverToken = null;
 
         ChangeStatus(false);
     }
@@ -153,7 +203,7 @@ public class NetClient : MonoBehaviour
 
     public void SendNickName()
     {
-        SendData(NetProtocol.REQ_NICKNAME, clientToken.clientName);
+        SendData(NetProtocol.REQ_NICKNAME, serverToken.clientName);
 
     }
 
