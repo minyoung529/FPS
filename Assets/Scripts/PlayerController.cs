@@ -9,6 +9,7 @@ public class PlayerController : BaseCharacterController
     private bool isDead;
     [SerializeField]
     private ParticleSystem hitEffect;
+    private bool started;
 
     PlayerSkinManager skinManager;
 
@@ -42,8 +43,14 @@ public class PlayerController : BaseCharacterController
        
     }
 
+    public void StartGame()
+    {
+        started = true;
+    }
+
     private void FixedUpdate()
     {
+        if (!started) return;
         if (UIManager.Instance.GetIsPaused()) return;
         if (isDead) return;
         Rotate();

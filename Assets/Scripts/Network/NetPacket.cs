@@ -15,6 +15,11 @@ public class NetPacket
     public byte[] packetData; // [Protocol ] [ body Length] [ body ] ㅏ 다 가지고 있대
 
     public NetPacket() { }
+    public NetPacket(int protocol)
+    {
+        this.protocol = protocol;
+        MakePacketData();
+    }
     public NetPacket(int protocol, string data)
     {
         this.protocol = protocol;
@@ -84,7 +89,17 @@ public class NetPacket
         Array.Copy(protocolHeader, 0, packetData, 0, protocolHeader.Length);
         Array.Copy(bodyLengthHeader, 0, packetData, protocolHeader.Length, bodyLengthHeader.Length);
         Array.Copy(body, 0, packetData, protocolHeader.Length + bodyLengthHeader.Length, body.Length);
+    }
 
+    private void MakePacketData()
+    {
+        byte[] protocolHeader = BitConverter.GetBytes(protocol);
+
+        int bodyLength = 0;
+        byte[] bodyLengthHeader = BitConverter.GetBytes(bodyLength);
+
+        Array.Copy(protocolHeader, 0, packetData, 0, protocolHeader.Length);
+        Array.Copy(bodyLengthHeader, 0, packetData, protocolHeader.Length, bodyLengthHeader.Length);
     }
 
     private byte[] ObjectToByteArray(object obj)

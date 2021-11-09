@@ -32,6 +32,9 @@ public class ChatManager : MonoBehaviour
     public InputField inputNickName;
 
     public bool firstJoin = true;
+    public Button btnGameStart;
+
+    private List<int> userTextIndexList = new List<int>(); // Id, TextChildIndex
     #endregion
 
     #region CHAT
@@ -47,6 +50,7 @@ public class ChatManager : MonoBehaviour
 
     private void Start()
     {
+        userTextIndexList.Add(-1);
         inputChat.onEndEdit.AddListener(_ =>
         {
             SendChat();
@@ -80,52 +84,63 @@ public class ChatManager : MonoBehaviour
         string status = clientConnected ? "CONNECT" : "DISCONNECT";
         txtClientStatus.text = $"Status: {status}";
     }
-    public void OnUserJoin(string userName)
+    public void OnUserJoin(int id, string userName)
     {
-        string msg = userName+"¥‘¿Ã ¿‘¿Â«œºÃΩ¿¥œ¥Ÿ";
+
+        string msg = userName + "¥‘¿Ã ¿‘¿Â«œºÃΩ¿¥œ¥Ÿ";
         Text newChat = Instantiate(chatPrefab, contentView.transform);
         newChat.text = msg;
 
         if (firstJoin)
         {
-            firstJoin = true;
+            firstJoin = false;
         }
         else
         {
             return;
         }
-        AddUserToList(userName);
+        AddUserToList(id, userName);
     }
 
-    public void OnUserDisconnect(string userName)
+    public void InteractbleStartButton()
+    {
+        btnGameStart.interactable = true;
+    }
+    public void OnUserDisconnect(int index, string userName)
+    {
+        int textIndex = userTextIndexList.FindIndex(clientIndex => clientIndex == index);
+        userListContentView.transform.GetChild(textIndex);
+        Transform userTextTransform = userListContentView.transform.GetChild(textIndex);
+        Destroy(userTextTransform.gameObject);
+        userTextIndexList.RemoveAt(textIndex);
+        Text newChat = Instantiate(chatPrefab, contentView.transform);
+        newChat.text = userName + "¥‘¿Ã ≥™∞¨Ω¿¥œ¥Ÿ!";
+
+    }
+
+    //name > index!
+    public void ResetUI()
     {
         Text[] names = userListContentView.transform.GetComponentsInChildren<Text>();
 
-        for(int i = 0; i<names.Length; i++)
+        foreach (Text text in names)
         {
-            if(names[i].text == userName)
-            {
-                Destroy(names[i]);
-                break;
-            }
+            Destroy(text.gameObject);
         }
 
-        Text newChat = Instantiate(chatPrefab, contentView.transform);
-        newChat.text = userName + "¥‘¿Ã ≥™∞¨Ω¿¥œ¥Ÿ!";
-    }
+        Text[] chats = contentView.GetComponentsInChildren<Text>();
 
-    public void OnGetClientList(string[] clientNames)
-    {
-        foreach(string name in clientNames)
+        foreach (Text text in chats)
         {
-            AddUserToList(name);
+            Destroy(text.gameObject);
         }
     }
 
-    private void AddUserToList(string userName)
+    private void AddUserToList(int id, string userName)
     {
         Text clientName = Instantiate(userCellPref, userListContentView.transform);
-        clientName.text = name;
+        userTextIndexList.Add(id);
+        clientName.text = userName;
     }
     public void OnReadChat(string name, StringBuilder chat)
     {
@@ -146,7 +161,7 @@ public class ChatManager : MonoBehaviour
             return;
         }
 
-        NetClient.Instance.ConnectToServer(ip, port,nickName);
+        NetClient.Instance.ConnectToServer(ip, port, nickName);
     }
 
     public void StartServer()
@@ -156,10 +171,17 @@ public class ChatManager : MonoBehaviour
             int port = int.Parse(inputServerPort.text);
             NetServer.Instance.InitializeServer(port);
         }
-        
-        catch(Exception)
+
+        catch (Exception)
         {
             throw;
         }
+    }
+
+    public void HandleStartGame()
+    {
+        //≥°µµ ∫∏¿Ã¡ˆ æ §ß§§
+        NetClient.Instance.SendStartGame();
+        //NetClient.Instance.StartScene(NetClient.Scene.MultiplayScene);
     }
 }

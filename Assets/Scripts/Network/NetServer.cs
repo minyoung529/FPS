@@ -1,10 +1,9 @@
-using System.Collections;
-using System.Net.Sockets;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
+using System.Net.Sockets;
 using System.Net;
-using System.IO;
+using UnityEngine;
 
 public class NetServer : MonoBehaviour
 {
@@ -14,11 +13,14 @@ public class NetServer : MonoBehaviour
 
     private string localIP;
 
+    private NetClient.Scene scene;
+
     private TcpListener server;
     private bool serverStarted = false;
 
     private List<ClientToken> clients;
     private List<ClientToken> disconnectList;
+    private int hostId = -1;
 
     private string ip;
     private string port;
@@ -37,6 +39,7 @@ public class NetServer : MonoBehaviour
     {
         clients = new List<ClientToken>();
         disconnectList = new List<ClientToken>();
+        scene = NetClient.Scene.SocketChat;
         GetLocalIP();
     }
 
@@ -100,6 +103,10 @@ public class NetServer : MonoBehaviour
         serverStarted = status;
         ChatManager.Instance?.OnChangeServerStatus(serverStarted);
 
+        //if(scene == NetClient.Scene.)
+        //{
+
+        //}
     }
 
     private void Update()
@@ -147,9 +154,30 @@ public class NetServer : MonoBehaviour
 
             if (disconnectList.Count > 0)
             {
+                bool hostExit = disconnectList.Exists(token => token.index == hostId);
+
                 disconnectList.Clear();
+
+                if(hostExit)
+                {
+                    try
+                    {
+                        SetHost(clients[0]);
+                    }
+
+                    catch (Exception e)
+                    {
+                        throw;
+                    }
+                }
             }
         }
+    }
+
+    private void SetHost(ClientToken token)
+    {
+        hostId = token.index;
+        SendData(token, new NetPacket(NetProtocol.SYS_SET_HOST));
     }
 
     private void OnReadData(NetPacket packet, ClientToken token)
@@ -164,6 +192,10 @@ public class NetServer : MonoBehaviour
             case NetProtocol.REQ_NICKNAME:
                 string nickname = packet.PopString();
                 token.clientName = nickname;
+                if (hostId == -1)
+                {
+                    SetHost(token);
+                }
                 broadcastPacket = new NetPacket(NetProtocol.RES_NICKNAME, nickname + "&" + token.index);
                 SendClientList(token);
                 break;
@@ -172,6 +204,11 @@ public class NetServer : MonoBehaviour
                 string chat = packet.PopString();
                 string newData = token.clientName + "&" + chat;
                 broadcastPacket = new NetPacket(NetProtocol.RES_CHAT, newData);
+                break;
+
+            case NetProtocol.REQ_GAME_START:
+                broadcastPacket = new NetPacket(NetProtocol.RES_GAME_START);
+                scene = NetClient.Scene.MultiplayScene;
                 break;
         }
 
@@ -245,6 +282,11 @@ public class NetServer : MonoBehaviour
             Debug.Log(e);
         }
     }
+
+    private void OnApplicationQuit()
+    {
+        CloseServer();
+    }
 }
 
 [Serializable]
@@ -266,4 +308,7 @@ public class ClientToken
         clientName = name;
         index = id;
     }
+
+
+    
 }

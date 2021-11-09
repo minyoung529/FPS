@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SocketChat.unity
     guid: 1c75a5c3e31b3e341a35df25c3328aa5
+  - enabled: 1
+    path: Assets/Scenes/MultiplayScene.unity
+    guid: 6b8f20acc62129c44be28b4f66f69d83
   m_configObjects: {}

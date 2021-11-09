@@ -7,25 +7,35 @@ using System.Net;
 using System.IO;
 using UnityEngine.UI;
 using System.Text;
+using UnityEngine.SceneManagement;
 
 public class NetClient : MonoBehaviour
 {
-    public static NetClient Instance;
+    public enum Scene
+    {
+        MultiplayScene = 2,
+        SocketChat = 99
+    }
 
+    public static NetClient Instance;
+    private Scene currentScene;
     private bool connected = false;
 
     public ClientToken serverToken;
     public NetworkStream stream;
 
     private byte[] data = new byte[1024];
-    private List<ClientToken> clients;
+    private bool isHost;
+    public List<ClientToken> clients;
     private void Awake()
     {
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
     {
+        currentScene = Scene.SocketChat;
         clients = new List<ClientToken>();
     }
 
@@ -74,26 +84,11 @@ public class NetClient : MonoBehaviour
         switch (packet.protocol)
         {
             case NetProtocol.SYS_CLIENT_LIST:
-                string[] clientsNames = (string[])packet.PopObject();
-
-                if (IsChatScene())
-                {
-                    for (int i = 0; i < clientsNames.Length; i++)
-                    {
-                        if (i == clientsNames.Length - 1) break;
-                        ClientToken client = AddClient(clientsNames[i]);
-                        
-                        ChatManager.Instance.OnUserJoin(client.clientName);
-                    }
-                }
+                SceneEvent(packet);
                 break;
 
-            case NetProtocol.RES_NICKNAME: // user join
-                if (IsChatScene())
-                {
-                    ChatManager.Instance.OnUserJoin(AddClient(packet.PopString()).clientName);
-                }
-
+            case NetProtocol.RES_NICKNAME:
+                SceneEvent(packet);
                 break;
 
             case NetProtocol.RES_CHAT:
@@ -117,14 +112,58 @@ public class NetClient : MonoBehaviour
                 int disconnectedId = packet.PopInt();
                 string dName = clients.Find(client => client.index == disconnectedId).clientName;
 
-                if(IsChatScene())
+                SceneEvent(packet);
+                ChatManager.Instance.OnUserDisconnect(disconnectedId, dName);
+                break;
+
+            case NetProtocol.RES_GAME_START:
+                StartScene(Scene.MultiplayScene);
+                break;
+
+            case NetProtocol.SYS_SET_HOST:
+                isHost = true;
+                break;
+        }
+    }
+    private void SceneEvent(NetPacket packet)
+    {
+        switch (currentScene)
+        {
+            case Scene.MultiplayScene:
+                break;
+            case Scene.SocketChat:
+                switch (packet.protocol)
                 {
-                    ChatManager.Instance.OnUserDisconnect(dName);
+                    case NetProtocol.SYS_CLIENT_LIST:
+                        string[] clientsNames = (string[])packet.PopObject();
+
+                        for (int i = 0; i < clientsNames.Length; i++)
+                        {
+                            if (i == clientsNames.Length - 1) break;
+                            ClientToken client = AddClient(clientsNames[i]);
+
+                            ChatManager.Instance.OnUserJoin(client.index, client.clientName);
+                        }
+                        break;
+
+                    case NetProtocol.RES_NICKNAME: // user join
+                        ClientToken t = AddClient(packet.PopString());
+                        ChatManager.Instance.OnUserJoin(t.index, t.clientName);
+                        break;
+
+                    case NetProtocol.SYS_SET_HOST:
+                        isHost = true;
+                        ChatManager.Instance.InteractbleStartButton();
+                        break;
                 }
                 break;
         }
     }
 
+    public void SendStartGame()
+    {
+        SendData(NetProtocol.REQ_GAME_START);
+    }
     private ClientToken AddClient(string cn)
     {
         string[] nameIndex = cn.Split('&');
@@ -138,10 +177,6 @@ public class NetClient : MonoBehaviour
         ClientToken token = new ClientToken(clientName, id);
         clients.Add(token);
         return token;
-    }
-    private bool IsChatScene()
-    {
-        return ChatManager.Instance != null;
     }
     public void ConnectToServer(string ip, string port, string nickName)
     {
@@ -183,8 +218,11 @@ public class NetClient : MonoBehaviour
 
         serverToken.tcp.Close();
         serverToken = null;
+        isHost = false;
 
         ChangeStatus(false);
+
+        ChatManager.Instance?.ResetUI();
     }
 
 
@@ -216,5 +254,24 @@ public class NetClient : MonoBehaviour
         stream.Write(packet.packetData, 0, packet.packetData.Length);
         stream.Flush();
     }
+
+    private void SendData(int protocol)
+    {
+        if (!connected) return;
+
+        NetPacket packet = new NetPacket(protocol);
+
+        stream.Write(packet.packetData, 0, packet.packetData.Length);
+        stream.Flush();
+    }
+
+
+    public void StartScene(Scene scene)
+    {
+        currentScene = scene;
+
+        SceneManager.LoadScene(scene.ToString());
+    }
+
     #endregion
 }
