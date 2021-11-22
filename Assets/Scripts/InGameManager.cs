@@ -12,6 +12,8 @@ public class InGameManager : MonoBehaviour
 
     public Transform[] spawnPositions;
 
+    private int listOrder = -1;
+
     void Start()
     {
         netClient = NetClient.Instance;
@@ -24,10 +26,14 @@ public class InGameManager : MonoBehaviour
         //player 수, 생성위치, 누가 나인지
         playerCount = netClient.clients.Count;
 
-        for(int i = 0; i<playerCount;i++)
+        for (int i = 0; i < playerCount; i++)
         {
             GeneratePlayer(i);
         }
+
+        listOrder = netClient.listOrder;
+
+        playerList[listOrder].StartGame();
     }
 
     private void GeneratePlayer(int index)

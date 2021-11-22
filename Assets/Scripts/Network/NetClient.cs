@@ -27,6 +27,10 @@ public class NetClient : MonoBehaviour
     private byte[] data = new byte[1024];
     private bool isHost;
     public List<ClientToken> clients;
+    public int listOrder { get; private set; } // clients & playerList (ingame) list order
+    public int id { get; private set; }
+    private bool idSet = false;
+
     private void Awake()
     {
         Instance = this;
@@ -35,6 +39,8 @@ public class NetClient : MonoBehaviour
 
     private void Start()
     {
+        id = -1;
+        listOrder = -1;
         currentScene = Scene.SocketChat;
         clients = new List<ClientToken>();
     }
@@ -110,7 +116,7 @@ public class NetClient : MonoBehaviour
 
             case NetProtocol.SYS_CLIENT_DISCONNECT:
                 int disconnectedId = packet.PopInt();
-                string dName = clients.Find(client => client.index == disconnectedId).clientName;
+                string dName = clients.Find(client => client.id == disconnectedId).clientName;
 
                 SceneEvent(packet);
                 ChatManager.Instance.OnUserDisconnect(disconnectedId, dName);
@@ -142,13 +148,13 @@ public class NetClient : MonoBehaviour
                             if (i == clientsNames.Length - 1) break;
                             ClientToken client = AddClient(clientsNames[i]);
 
-                            ChatManager.Instance.OnUserJoin(client.index, client.clientName);
+                            ChatManager.Instance.OnUserJoin(client.id, client.clientName);
                         }
                         break;
 
                     case NetProtocol.RES_NICKNAME: // user join
                         ClientToken t = AddClient(packet.PopString());
-                        ChatManager.Instance.OnUserJoin(t.index, t.clientName);
+                        ChatManager.Instance.OnUserJoin(t.id, t.clientName);
                         break;
 
                     case NetProtocol.SYS_SET_HOST:
@@ -175,7 +181,15 @@ public class NetClient : MonoBehaviour
             clientName += nameIndex[j];
         }
         ClientToken token = new ClientToken(clientName, id);
+
+        if(!idSet)
+        {
+            this.id = id;
+            listOrder = clients.Count;
+        }
+        Debug.Log("MyListOrder: " + listOrder);
         clients.Add(token);
+        listOrder = clients.IndexOf(token);
         return token;
     }
     public void ConnectToServer(string ip, string port, string nickName)

@@ -154,7 +154,7 @@ public class NetServer : MonoBehaviour
 
             if (disconnectList.Count > 0)
             {
-                bool hostExit = disconnectList.Exists(token => token.index == hostId);
+                bool hostExit = disconnectList.Exists(token => token.id == hostId);
 
                 disconnectList.Clear();
 
@@ -176,7 +176,7 @@ public class NetServer : MonoBehaviour
 
     private void SetHost(ClientToken token)
     {
-        hostId = token.index;
+        hostId = token.id;
         SendData(token, new NetPacket(NetProtocol.SYS_SET_HOST));
     }
 
@@ -196,7 +196,7 @@ public class NetServer : MonoBehaviour
                 {
                     SetHost(token);
                 }
-                broadcastPacket = new NetPacket(NetProtocol.RES_NICKNAME, nickname + "&" + token.index);
+                broadcastPacket = new NetPacket(NetProtocol.RES_NICKNAME, nickname + "&" + token.id);
                 SendClientList(token);
                 break;
 
@@ -220,7 +220,7 @@ public class NetServer : MonoBehaviour
         string[] names = new string[clients.Count];
         for (int i = 0; i < clients.Count; i++)
         {
-            names[i] = clients[i].clientName + "&" + clients[i].index;
+            names[i] = clients[i].clientName + "&" + clients[i].id;
         }
         SendData(token, new NetPacket(NetProtocol.SYS_CLIENT_LIST, names));
 
@@ -293,20 +293,20 @@ public class NetServer : MonoBehaviour
 public class ClientToken
 {
     public TcpClient tcp;
-    public int index = -1;
+    public int id = -1;
     public string clientName;
 
     public ClientToken(TcpClient tc, string name, int id = -1)
     {
         tcp = tc;
         clientName = name;
-        index = id;
+        this.id = id;
     }
 
     public ClientToken(string name, int id = -1)
     {
         clientName = name;
-        index = id;
+        this.id = id;
     }
 
 

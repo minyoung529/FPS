@@ -18,20 +18,30 @@ public class RaycastAim : MonoBehaviour
 
     [SerializeField] WeaponController wc;
 
-    private void Start()
+    public Transform aimPosition;
+
+    private bool started = false;
+
+    public void StartGame()
     {
         mainCam = Camera.main;
         currentWeapon = Weapon.Handgun;
         screenCenterPos = new Vector2(Screen.width / 2f, Screen.height / 2f);
+
+        cameraAimTarget = mainCam.transform.GetChild(0);
+        started = true;
     }
 
     void Update()
     {
+        if (!started) return;
+
         ray.origin = mainCam.transform.position + mainCam.transform.forward*6f;
         ray.direction = cameraAimTarget.position - ray.origin;
 
         if (Physics.Raycast(ray, out raycastInfo, 999f, mouseColliderLayerMask))
         {
+            aimPosition.position = raycastInfo.point;
             wc.aimPosition = raycastInfo.point;
         }
 

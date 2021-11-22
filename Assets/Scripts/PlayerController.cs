@@ -13,6 +13,9 @@ public class PlayerController : BaseCharacterController
 
     PlayerSkinManager skinManager;
 
+    public RaycastAim raycastAim;
+    public Cinemachine.CinemachineVirtualCamera cinemachineCam;
+
     protected override void Awake()
     {
         animator = GetComponent<Animator>();
@@ -23,7 +26,7 @@ public class PlayerController : BaseCharacterController
         jumpForce = 20;
         gravity = 50;
 
-        
+
         SetHP();
 
     }
@@ -40,12 +43,15 @@ public class PlayerController : BaseCharacterController
     private void Rotate()
     {
         transform.rotation = Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, Camera.main.transform.eulerAngles.z);
-       
+
     }
 
     public void StartGame()
     {
         started = true;
+        raycastAim.StartGame();
+        cinemachineCam.gameObject.SetActive(true);
+        cinemachineCam.enabled = true;
     }
 
     private void FixedUpdate()
@@ -78,7 +84,7 @@ public class PlayerController : BaseCharacterController
         animator.SetFloat("speed", controller.velocity.magnitude);
     }
 
-    
+
     private void SetHP()
     {
         maxHP = 20;
