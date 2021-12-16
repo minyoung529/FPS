@@ -22,7 +22,7 @@ public class RaycastAim : MonoBehaviour
 
     private bool started = false;
 
-    public void StartGame()
+    public void StartGame(bool isMe)
     {
         mainCam = Camera.main;
         currentWeapon = Weapon.Handgun;

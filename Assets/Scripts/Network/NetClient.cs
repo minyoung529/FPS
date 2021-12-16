@@ -161,6 +161,11 @@ public class NetClient : MonoBehaviour
                         isHost = true;
                         ChatManager.Instance.InteractbleStartButton();
                         break;
+
+                    case NetProtocol.RES_PLAYER_TRANSFORM:
+                        List<string[]> transformList = (List<string[]>)packet.PopObject();
+
+                        break;
                 }
                 break;
         }
@@ -180,9 +185,9 @@ public class NetClient : MonoBehaviour
         {
             clientName += nameIndex[j];
         }
-        ClientToken token = new ClientToken(clientName, id);
+        ClientToken token = new ClientToken(clientName, id, clients.Count);
 
-        if(!idSet)
+        if (!idSet)
         {
             this.id = id;
             listOrder = clients.Count;
@@ -196,7 +201,6 @@ public class NetClient : MonoBehaviour
     {
         if (ip == "" || port == "")
         {
-            Debug.Log("sd");
             return;
         }
 
@@ -239,7 +243,6 @@ public class NetClient : MonoBehaviour
         ChatManager.Instance?.ResetUI();
     }
 
-
     private void ChangeStatus(bool status)
     {
         connected = status;
@@ -250,7 +253,6 @@ public class NetClient : MonoBehaviour
     public void SendChat(string msg)
     {
         SendData(NetProtocol.REQ_CHAT, msg);
-
     }
 
     public void SendNickName()
@@ -286,6 +288,25 @@ public class NetClient : MonoBehaviour
 
         SceneManager.LoadScene(scene.ToString());
     }
+
+    public void SendTranform(NetTransform trans)
+    {
+        NetPacket packet = new NetPacket(NetProtocol.REQ_PLAYER_TRANSFORM, trans);
+        SendData(packet);
+    }
+
+    public void SendTranform(string[] trans)
+    {
+        NetPacket packet = new NetPacket(NetProtocol.REQ_PLAYER_TRANSFORM, trans);
+        SendData(packet);
+    }
+
+    private void SendData(NetPacket packet)
+    {
+        stream.Write(packet.packetData, 0, packet.packetData.Length);
+        stream.Flush();
+    }
+
 
     #endregion
 }

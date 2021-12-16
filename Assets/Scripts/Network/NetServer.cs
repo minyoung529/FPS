@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Net.Sockets;
 using System.Net;
-using UnityEngine;
+using System.Collections;
 
 public class NetServer : MonoBehaviour
 {
@@ -20,10 +20,13 @@ public class NetServer : MonoBehaviour
 
     private List<ClientToken> clients;
     private List<ClientToken> disconnectList;
+    private List<string[]> transformList;
     private int hostId = -1;
 
     private string ip;
     private string port;
+
+    private bool tranformSending;
 
     private byte[] data = new byte[1024];
 
@@ -40,6 +43,7 @@ public class NetServer : MonoBehaviour
         clients = new List<ClientToken>();
         disconnectList = new List<ClientToken>();
         scene = NetClient.Scene.SocketChat;
+        transformList = new List<string[]>();
         GetLocalIP();
     }
 
@@ -158,7 +162,7 @@ public class NetServer : MonoBehaviour
 
                 disconnectList.Clear();
 
-                if(hostExit)
+                if (hostExit)
                 {
                     try
                     {
@@ -209,12 +213,34 @@ public class NetServer : MonoBehaviour
             case NetProtocol.REQ_GAME_START:
                 broadcastPacket = new NetPacket(NetProtocol.RES_GAME_START);
                 scene = NetClient.Scene.MultiplayScene;
+
+                for (int i = 0; i < clients.Count; i++)
+                {
+                    clients[i].listOrder = i;
+                    transformList.Add(new string[2]);
+                }
+                break;
+            case NetProtocol.REQ_PLAYER_TRANSFORM:
+                if (!tranformSending)
+                {
+                    tranformSending = true;
+                    StartCoroutine(SendTranformCoroutine());
+                }
+                transformList[token.listOrder] = (string[])packet.PopObject();
                 break;
         }
 
         Broadcast(broadcastPacket);
     }
-
+    private IEnumerator SendTranformCoroutine()
+    {
+        while (tranformSending)
+        {
+            NetPacket packet = new NetPacket(NetProtocol.RES_PLAYER_TRANSFORM, transformList);
+            Broadcast(packet);
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
     private void SendClientList(ClientToken token)
     {
         string[] names = new string[clients.Count];
@@ -294,21 +320,19 @@ public class ClientToken
 {
     public TcpClient tcp;
     public int id = -1;
+    public int listOrder = -1;
     public string clientName;
 
-    public ClientToken(TcpClient tc, string name, int id = -1)
+    public ClientToken(TcpClient tc, string name, int id = -1, int listOrder = -1)
     {
         tcp = tc;
         clientName = name;
         this.id = id;
     }
 
-    public ClientToken(string name, int id = -1)
+    public ClientToken(string name, int id = -1, int listOrder = -1)
     {
         clientName = name;
         this.id = id;
     }
-
-
-    
 }
