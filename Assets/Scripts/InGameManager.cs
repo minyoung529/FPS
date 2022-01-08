@@ -62,10 +62,13 @@ public class InGameManager : MonoBehaviour
                 continue;
 
             Vector3 pos = new Vector3(float.Parse(posStrs[0]), float.Parse(posStrs[1]), float.Parse(posStrs[2]));
-            Quaternion rot = Quaternion.Euler(float.Parse(rotStrs[0]), float.Parse(rotStrs[1]), float.Parse(rotStrs[2]));
+            //Quaternion rot = Quaternion.Euler(float.Parse(rotStrs[0]), float.Parse(rotStrs[1]), float.Parse(rotStrs[2]));
+            float xAxis = float.Parse(rotStrs[0]);
+            float yAxis = float.Parse(rotStrs[1]);
 
             Vector3 offset = pos - playerList[i].transform.position;
 
+            //진동방지
             if(offset.magnitude > interpolateConstant)
             {
                 playerList[i].UpdateMoveDirection(offset);
@@ -74,6 +77,8 @@ public class InGameManager : MonoBehaviour
             {
                 playerList[i].UpdateMoveDirection(Vector3.zero);
             }
+
+            playerList[i].playerAim.NetPlayerRotation(xAxis, yAxis);
         }
     }
 }

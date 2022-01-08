@@ -11,6 +11,7 @@ public class PlayerController : BaseCharacterController
     [SerializeField]
     private ParticleSystem hitEffect;
     private bool isMe;
+    public PlayerAim playerAim;
     private bool started;
 
     PlayerSkinManager skinManager;
@@ -24,6 +25,7 @@ public class PlayerController : BaseCharacterController
     {
         animator = GetComponent<Animator>();
         skinManager = GetComponent<PlayerSkinManager>();
+        playerAim = GetComponent<PlayerAim>();
         base.Awake();
 
         speed = 10;
@@ -56,6 +58,7 @@ public class PlayerController : BaseCharacterController
         started = true;
         raycastAim.StartGame(isMe);
         cinemachineCam.gameObject.SetActive(true);
+        playerAim.StartGame(isMe, cinemachineCam);
 
         if (isMe)
         {
@@ -71,7 +74,7 @@ public class PlayerController : BaseCharacterController
         if (isDead) return;
 
 
-        if(isMe)
+        if (isMe)
         {
             moveDir = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
             UpdateMoveDirection(transform.TransformDirection(moveDir));
@@ -136,7 +139,8 @@ public class PlayerController : BaseCharacterController
 
             string[] trans = new string[2];
             trans[0] = string.Format("{0}:{1}:{2}", transform.position.x, transform.position.y, transform.position.z);
-            trans[1] = string.Format("{0}:{1}:{2}", transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
+            //trans[1] = string.Format("{0}:{1}:{2}", transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
+            trans[1] = string.Format("{0}:{1}", playerAim.xAxis.Value, playerAim.yAxis.Value);
             NetClient.Instance.SendTranform(trans);
             yield return transformDelay;
         }

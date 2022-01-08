@@ -14,30 +14,32 @@ public class RaycastAim : MonoBehaviour
     Ray ray;
     RaycastHit raycastInfo;
 
-    private Camera mainCam;
-
     [SerializeField] WeaponController wc;
 
     public Transform aimPosition;
 
     private bool started = false;
+    private bool isMe = false;
+    private Cinemachine.CinemachineVirtualCamera cam;
 
-    public void StartGame(bool isMe)
+    public void StartGame(bool isMe, Cinemachine.CinemachineVirtualCamera cam)
     {
-        mainCam = Camera.main;
+        //mainCam = Camera.main;
         currentWeapon = Weapon.Handgun;
         screenCenterPos = new Vector2(Screen.width / 2f, Screen.height / 2f);
-
-        cameraAimTarget = mainCam.transform.GetChild(0);
+        this.cam = cam;
+        cameraAimTarget = cam.transform.GetChild(0);
         started = true;
+        this.isMe = isMe;
     }
 
     void Update()
     {
         if (!started) return;
-
-        ray.origin = mainCam.transform.position + mainCam.transform.forward*6f;
-        ray.direction = cameraAimTarget.position - ray.origin;
+        if (!isMe) return;
+        Vector3 forward = cam.State.CorrectedOrientation * Vector3.forward;
+        ray.origin = cam.transform.position + cam.transform.forward * 6f;
+        ray.direction = forward;
 
         if (Physics.Raycast(ray, out raycastInfo, 999f, mouseColliderLayerMask))
         {
@@ -50,7 +52,7 @@ public class RaycastAim : MonoBehaviour
             wc.Reloading();
         }
 
-        if(Input.GetKeyUp(KeyCode.Alpha1))
+        if (Input.GetKeyUp(KeyCode.Alpha1))
         {
             SwapWeapon(Weapon.Handgun);
         }
@@ -68,7 +70,7 @@ public class RaycastAim : MonoBehaviour
 
     private void SwapWeapon(Weapon weaponType)
     {
-        if(weaponType == currentWeapon)
+        if (weaponType == currentWeapon)
         {
             return;
         }
